@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Staked Assets - Retro Space</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ad2bee",
+                        "primary-glow": "#c65cf2",
+                        "background-light": "#f7f6f8", // Fallback, mostly unused in this dark theme
+                        "background-dark": "#150b1a", // Deep void
+                        "surface": "#2b1933",
+                        "surface-light": "#3c2348",
+                        "accent-text": "#b792c9",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    backgroundImage: {
+                        'retro-gradient': 'linear-gradient(180deg, rgba(43,25,51,0) 0%, rgba(173,43,238,0.05) 100%)',
+                    }
+                },
+            },
+        }
+    </script>
+<script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #150b1a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3c2348; 
+            border-radius: 3px;
+        }
+        
+        .glass-panel {
+            background: rgba(43, 25, 51, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .neon-border {
+            box-shadow: 0 0 10px rgba(173, 43, 238, 0.2);
+            border: 1px solid rgba(173, 43, 238, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden font-display text-white selection:bg-primary selection:text-white">
+<!-- Background Texture -->
+<div class="fixed inset-0 pointer-events-none z-0 opacity-20" style="background-image: radial-gradient(#ad2bee 1px, transparent 1px); background-size: 30px 30px;"></div>
+<!-- Header -->
+<div class="sticky top-0 z-50 glass-panel px-4 py-3 flex items-center justify-between shadow-lg">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-white">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight uppercase">MKE Combustion</h1>
+<div class="flex items-center gap-2 bg-surface-light px-3 py-1.5 rounded-full border border-white/5">
+<span class="material-symbols-outlined text-primary text-[18px]">account_balance_wallet</span>
+<span class="text-xs font-bold tracking-wider text-accent-text" id="wallet-address">0x3A...9F2</span>
+</div>
+</div>
+<div class="relative z-10 flex flex-col gap-6 p-4">
+<!-- Rank Card -->
+<div class="w-full bg-surface rounded-2xl p-5 neon-border relative overflow-hidden group">
+<!-- Decorative background element -->
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all duration-500"></div>
+<div class="flex flex-col gap-4 relative z-10">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-primary/50 shadow-[0_0_15px_rgba(173,43,238,0.4)]">
+<img alt="Commander Rank Insignia Badge" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuKVs4nYN0Sx9O5ebhGI0hCR6riV6BSdsu3VLQhXlKS7Ey5sQAHdy7a0zFcEwLbZTgqNmwLWogc6q4Gjq1PIREdlXHL_zv7IOCo_NMhUeuOjUNfazoV7JOFa3jennfHIjdi5vG4GUhwB65gdA3Dh5JSpyxToOuTdPklxpmBtbTuCV9uCl7D-LUQEr8U8PXVgWesqt32Rcje2f2NSvH9qk34A1JSWQLQbm-vhA_dKq86-CWhEun7JsLpv-TOVPbF_idnjm8KO7u7j0"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-accent-text text-xs font-bold tracking-widest uppercase mb-1">Current Clearance</p>
+<h2 class="text-2xl font-bold leading-none text-white" id="display-tier">Commander</h2>
+<p class="text-white/60 text-sm mt-1">Tier 2</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary animate-pulse">rocket_launch</span>
+</div>
+<!-- Progress Section -->
+<div class="mt-2">
+<div class="flex justify-between items-end mb-2">
+<span class="text-sm font-medium text-white">Progress to Tier 3</span>
+<span class="text-xs font-mono text-primary">3,250 / 5,000 MKE</span>
+</div>
+<div class="h-3 w-full bg-[#150b1a] rounded-full overflow-hidden border border-white/5 relative">
+<!-- Striped progress bar pattern -->
+<div class="h-full bg-primary relative w-[65%] shadow-[0_0_10px_#ad2bee]" style="background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem;"></div>
+</div>
+<div class="flex justify-between mt-2">
+<p class="text-xs text-white/40">Next Reward: 2.0x Boost</p>
+<p class="text-xs text-accent-text font-bold">65%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Stat 1 -->
+<div class="bg-surface-light p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-primary/40 transition-colors">
+<div class="flex items-center gap-2 text-accent-text">
+<span class="material-symbols-outlined text-[20px]">local_fire_department</span>
+<span class="text-xs font-bold uppercase tracking-wider">Total Burned</span>
+</div>
+<p class="text-xl font-bold text-white tracking-tight" id="display-burned">25,400 <span class="text-sm font-normal text-white/50">MKE</span></p>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface-light p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-primary/40 transition-colors">
+<div class="flex items-center gap-2 text-accent-text">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+<span class="text-xs font-bold uppercase tracking-wider">Boost</span>
+</div>
+<p class="text-xl font-bold text-white tracking-tight">1.5x <span class="text-sm font-normal text-white/50">APR</span></p>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface-light p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-primary/40 transition-colors">
+<div class="flex items-center gap-2 text-accent-text">
+<span class="material-symbols-outlined text-[20px]">stars</span>
+<span class="text-xs font-bold uppercase tracking-wider">Earned</span>
+</div>
+<p class="text-xl font-bold text-white tracking-tight">1,200 <span class="text-sm font-normal text-white/50">MKE</span></p>
+</div>
+<!-- Stat 4 -->
+<div class="bg-surface-light p-4 rounded-xl border border-primary/30 flex flex-col gap-2 relative overflow-hidden">
+<div class="absolute right-0 top-0 w-16 h-16 bg-primary/10 rounded-bl-full"></div>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[20px]">hourglass_top</span>
+<span class="text-xs font-bold uppercase tracking-wider">Pending</span>
+</div>
+<p class="text-xl font-bold text-white tracking-tight" id="display-pending">340 <span class="text-sm font-normal text-white/50">MKE</span></p>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-3">
+<button id="btn-ignite" class="relative w-full h-14 bg-primary hover:bg-primary-glow rounded-xl flex items-center justify-center gap-2 text-white font-bold tracking-wider transition-all shadow-[0_0_20px_rgba(173,43,238,0.4)] group overflow-hidden">
+<div class="absolute inset-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%)] -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+<span class="material-symbols-outlined">local_fire_department</span>
+<span>IGNITE (BURN MORE)</span>
+</button>
+<button id="btn-claim" class="w-full h-12 bg-surface hover:bg-surface-light border border-primary/30 rounded-xl flex items-center justify-center gap-2 text-accent-text font-bold tracking-wider transition-all">
+<span class="material-symbols-outlined">download</span>
+<span>CLAIM REWARDS</span>
+</button>
+</div>
+<!-- Mission Log (History) -->
+<div class="mt-2">
+<div class="flex items-center justify-between mb-4 px-1">
+<h3 class="text-white text-lg font-bold uppercase tracking-wide flex items-center gap-2">
+<span class="material-symbols-outlined text-accent-text">history</span>
+                    Mission Log
+                </h3>
+<span class="text-xs text-primary cursor-pointer hover:underline">View All</span>
+</div>
+<div class="bg-surface rounded-xl border border-white/5 overflow-hidden">
+<!-- Log Item 1 -->
+<div class="flex items-center justify-between p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 border border-green-500/30">
+<span class="material-symbols-outlined text-[20px]">arrow_downward</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-white group-hover:text-primary transition-colors">Rewards Claimed</span>
+<span class="text-xs text-white/40 font-mono">2023-10-24 • 14:30</span>
+</div>
+</div>
+<div class="text-right">
+<span class="block text-sm font-bold text-green-400">+50.00 MKE</span>
+<span class="block text-[10px] text-white/30 uppercase tracking-widest">Confirmed</span>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="flex items-center justify-between p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+<span class="material-symbols-outlined text-[20px]">local_fire_department</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-white group-hover:text-primary transition-colors">Assets Incinerated</span>
+<span class="text-xs text-white/40 font-mono">2023-10-20 • 09:15</span>
+</div>
+</div>
+<div class="text-right">
+<span class="block text-sm font-bold text-white">-2,500 MKE</span>
+<span class="block text-[10px] text-white/30 uppercase tracking-widest">Confirmed</span>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="flex items-center justify-between p-4 hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/30">
+<span class="material-symbols-outlined text-[20px]">keyboard_double_arrow_up</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-white group-hover:text-primary transition-colors">Rank Upgraded</span>
+<span class="text-xs text-white/40 font-mono">2023-10-15 • 18:45</span>
+</div>
+</div>
+<div class="text-right">
+<span class="block text-sm font-bold text-blue-400">Tier 2</span>
+<span class="block text-[10px] text-white/30 uppercase tracking-widest">Success</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom padding for scroll -->
+<div class="h-6"></div>
+</div>
+</div>
+<script>
+const contractAddress = "0x2D9C2f2d48297CFDeAF79b66c29212A8880Ae7bC";
+
+const contractABI = [
+    "function upgradeTier(uint256 amount) public",
+    "function claimCredits() public",
+    "function userInfo(address user) public view returns (uint256 tier, uint256 balance, uint256 lastClaim)"
+];
+
+let signer;
+let contract;
+
+async function initWeb3() {
+    if (window.ethereum) {
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            contract = new ethers.Contract(contractAddress, contractABI, signer);
+            
+            const addr = await signer.getAddress();
+            document.getElementById('wallet-address').innerText = addr.substring(0,6) + "..." + addr.substring(38);
+            console.log("Connected to MKE Protocol");
+            await updateDashboard();
+        } catch (e) { console.error("Connection failed", e); }
+    } else { alert("กรุณาติดตั้ง MetaMask ครับ!"); }
+}
+
+async function handleIgnite() {
+    if (!contract) await initWeb3();
+    try {
+        const amount = ethers.utils.parseEther("1000");
+        const tx = await contract.upgradeTier(amount);
+        console.log("Transaction Hash:", tx.hash);
+        alert("กำลังส่งคำสั่ง Burn... โปรดรอยืนยันธุรกรรม");
+        await tx.wait();
+        alert("Burn สำเร็จ! ระดับ Tier ของคุณกำลังอัปเกรด");
+        await updateDashboard();
+    } catch (e) { alert("Error: " + (e.data?.message || e.message)); }
+}
+
+async function handleClaim() {
+    if (!contract) await initWeb3();
+    try {
+        const tx = await contract.claimCredits();
+        await tx.wait();
+        alert("Claim รางวัลสำเร็จแล้ว!");
+        await updateDashboard();
+    } catch (e) { alert("Claim ล้มเหลว: " + e.message); }
+}
+
+async function updateDashboard() {
+    if (!contract || !signer) return;
+    try {
+        const addr = await signer.getAddress();
+        const info = await contract.userInfo(addr);
+        const tier = info.tier.toNumber();
+        const balance = ethers.utils.formatEther(info.balance);
+        const lastClaim = info.lastClaim.toNumber();
+        
+        let tierName = "Recruit";
+        if (tier === 1) tierName = "SOLDIER";
+        else if (tier === 2) tierName = "COMMANDER";
+        document.getElementById('display-tier').innerText = tierName;
+        
+        document.getElementById('display-burned').innerText = parseFloat(balance).toFixed(2) + ' MKE';
+        
+        // Mock pending calculation: 10 MKE per hour since last claim
+        const currentTime = Math.floor(Date.now() / 1000);
+        const hoursSinceClaim = Math.floor((currentTime - lastClaim) / 3600);
+        const pending = hoursSinceClaim * 10;
+        document.getElementById('display-pending').innerText = pending.toFixed(2) + ' MKE';
+    } catch (e) {
+        console.error("Failed to update dashboard", e);
+    }
+}
+
+// เปลี่ยนจาก window.addEventListener('load', initWeb3); เป็นชุดนี้:
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (typeof window.ethereum !== 'undefined') {
+            initWeb3(); // เริ่มระบบเมื่อมั่นใจว่าเจอ MetaMask แล้ว
+        }
+    }, 1000); // รอ 1 วินาทีเพื่อให้ Extension พร้อมทำงาน
+});
+
+document.getElementById('btn-ignite').addEventListener('click', handleIgnite);
+document.getElementById('btn-claim').addEventListener('click', handleClaim);
+</script>
+</body></html>
