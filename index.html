@@ -4,21 +4,17 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>My Staked Assets - Retro Space</title>
-    
-    <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    
-    <!-- Material Symbols -->
+
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    
-    <!-- ⚠️ IMPORTANT: Load Ethers.js FIRST before any other scripts -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    
-    <!-- Tailwind CSS -->
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
+
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -40,66 +36,38 @@
             },
         }
     </script>
-    
+
     <style>
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #150b1a; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #3c2348; 
-            border-radius: 3px;
-        }
-        
-        .glass-panel {
-            background: rgba(43, 25, 51, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .neon-border {
-            box-shadow: 0 0 10px rgba(173, 43, 238, 0.2);
-            border: 1px solid rgba(173, 43, 238, 0.3);
-        }
-
-        body {
-            min-height: max(884px, 100dvh);
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #150b1a; }
+        ::-webkit-scrollbar-thumb { background: #3c2348; border-radius: 3px; }
+        .glass-panel { background: rgba(43, 25, 51, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .neon-border { box-shadow: 0 0 10px rgba(173, 43, 238, 0.2); border: 1px solid rgba(173, 43, 238, 0.3); }
+        body { min-height: max(884px, 100dvh); }
     </style>
 </head>
 <body class="antialiased">
-    <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-dark overflow-x-hidden font-display text-white selection:bg-primary selection:text-white">
-        
-        <!-- Background Texture -->
+    <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-dark overflow-x-hidden font-display text-white">
         <div class="fixed inset-0 pointer-events-none z-0 opacity-20" style="background-image: radial-gradient(#ad2bee 1px, transparent 1px); background-size: 30px 30px;"></div>
-        
-        <!-- Header -->
+
         <div class="sticky top-0 z-50 glass-panel px-4 py-3 flex items-center justify-between shadow-lg">
             <button class="flex size-10 items-center justify-center rounded-full hover:bg-white/10 transition-colors">
                 <span class="material-symbols-outlined text-white">arrow_back</span>
             </button>
             <h1 class="text-lg font-bold tracking-tight uppercase">MKE Combustion</h1>
-            <button id="btn-connect-wallet" class="flex items-center gap-2 bg-primary hover:bg-primary-glow px-4 py-2 rounded-full border border-primary/30 transition-all shadow-[0_0_15px_rgba(173,43,238,0.3)]">
+            <button id="btn-connect-wallet" class="flex items-center gap-2 bg-primary hover:bg-primary-glow px-4 py-2 rounded-full border border-primary/30 transition-all">
                 <span class="material-symbols-outlined text-white text-[18px]">account_balance_wallet</span>
                 <span class="text-xs font-bold tracking-wider text-white">CONNECT</span>
             </button>
         </div>
 
         <div class="relative z-10 flex flex-col gap-6 p-4">
-            
-            <!-- Rank Card -->
             <div class="w-full bg-surface rounded-2xl p-5 neon-border relative overflow-hidden group">
-                <div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all duration-500"></div>
-                
                 <div class="flex flex-col gap-4 relative z-10">
                     <div class="flex items-start justify-between">
                         <div class="flex gap-4">
-                            <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-primary/50 shadow-[0_0_15px_rgba(173,43,238,0.4)]">
-                                <img alt="Commander Rank Insignia Badge" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuKVs4nYN0Sx9O5ebhGI0hCR6riV6BSdsu3VLQhXlKS7Ey5sQAHdy7a0zFcEwLbZTgqNmwLWogc6q4Gjq1PIREdlXHL_zv7IOCo_NMhUeuOjUNfazoV7JOFa3jennfHIjdi5vG4GUhwB65gdA3Dh5JSpyxToOuTdPklxpmBtbTuCV9uCl7D-LUQEr8U8PXVgWesqt32Rcje2f2NSvH9qk34A1JSWQLQbm-vhA_dKq86-CWhEun7JsLpv-TOVPbF_idnjm8KO7u7j0"/>
+                            <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-primary/50">
+                                <img alt="Rank" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
                             </div>
                             <div class="flex flex-col justify-center">
                                 <p class="text-accent-text text-xs font-bold tracking-widest uppercase mb-1">Current Clearance</p>
@@ -109,540 +77,167 @@
                         </div>
                         <span class="material-symbols-outlined text-primary animate-pulse">rocket_launch</span>
                     </div>
-                    
-                    <!-- Progress Section -->
+
                     <div class="mt-2">
                         <div class="flex justify-between items-end mb-2">
                             <span class="text-sm font-medium text-white">Progress to Next Tier</span>
                             <span class="text-xs font-mono text-primary" id="progress-text">0 / 1000 MKE</span>
                         </div>
-                        <div class="h-3 w-full bg-[#150b1a] rounded-full overflow-hidden border border-white/5 relative">
-                            <div class="h-full bg-primary relative shadow-[0_0_10px_#ad2bee]" id="progress-bar" style="width: 0%; background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem;"></div>
+                        <div class="h-3 w-full bg-[#150b1a] rounded-full overflow-hidden border border-white/5">
+                            <div class="h-full bg-primary" id="progress-bar" style="width: 0%;"></div>
                         </div>
                         <div class="flex justify-between mt-2">
-                            <p class="text-xs text-white/40">Next Reward: 2.0x Boost</p>
+                            <p class="text-xs text-white/40">Next Reward: Boost Increase</p>
                             <p class="text-xs text-accent-text font-bold" id="progress-percent">0%</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
             <div class="grid grid-cols-2 gap-3">
-                <!-- Wallet Balance -->
-                <div class="bg-gradient-to-br from-primary/20 to-primary/5 p-4 rounded-xl border border-primary/40 flex flex-col gap-2 hover:border-primary/60 transition-colors">
-                    <div class="flex items-center gap-2 text-primary">
-                        <span class="material-symbols-outlined text-[20px]">wallet</span>
-                        <span class="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
-                    </div>
-                    <p class="text-xl font-bold text-white tracking-tight" id="display-wallet-balance"><span class="text-white/40">--</span> <span class="text-sm font-normal text-white/50">MKE</span></p>
+                <div class="bg-gradient-to-br from-primary/20 to-primary/5 p-4 rounded-xl border border-primary/40">
+                    <div class="flex items-center gap-2 text-primary"><span class="material-symbols-outlined">wallet</span><span class="text-xs font-bold uppercase">Balance</span></div>
+                    <p class="text-xl font-bold" id="display-wallet-balance">-- MKE</p>
                 </div>
-                
-                <!-- Total Burned -->
-                <div class="bg-surface-light p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-primary/40 transition-colors">
-                    <div class="flex items-center gap-2 text-accent-text">
-                        <span class="material-symbols-outlined text-[20px]">local_fire_department</span>
-                        <span class="text-xs font-bold uppercase tracking-wider">Total Burned</span>
-                    </div>
-                    <p class="text-xl font-bold text-white tracking-tight" id="display-burned">0 <span class="text-sm font-normal text-white/50">MKE</span></p>
-                </div>
-                
-                <!-- Boost -->
-                <div class="bg-surface-light p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-primary/40 transition-colors">
-                    <div class="flex items-center gap-2 text-accent-text">
-                        <span class="material-symbols-outlined text-[20px]">bolt</span>
-                        <span class="text-xs font-bold uppercase tracking-wider">Boost</span>
-                    </div>
-                    <p class="text-xl font-bold text-white tracking-tight" id="display-boost">1.0x <span class="text-sm font-normal text-white/50">APR</span></p>
-                </div>
-                
-                <!-- Earned -->
-                <div class="bg-surface-light p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-primary/40 transition-colors">
-                    <div class="flex items-center gap-2 text-accent-text">
-                        <span class="material-symbols-outlined text-[20px]">stars</span>
-                        <span class="text-xs font-bold uppercase tracking-wider">Earned</span>
-                    </div>
-                    <p class="text-xl font-bold text-white tracking-tight" id="display-earned">0 <span class="text-sm font-normal text-white/50">MKE</span></p>
-                </div>
-                
-                <!-- Pending -->
-                <div class="bg-surface-light p-4 rounded-xl border border-primary/30 flex flex-col gap-2 relative overflow-hidden col-span-2">
-                    <div class="absolute right-0 top-0 w-16 h-16 bg-primary/10 rounded-bl-full"></div>
-                    <div class="flex items-center gap-2 text-primary">
-                        <span class="material-symbols-outlined text-[20px]">hourglass_top</span>
-                        <span class="text-xs font-bold uppercase tracking-wider">Pending Rewards</span>
-                    </div>
-                    <p class="text-xl font-bold text-white tracking-tight" id="display-pending">0 <span class="text-sm font-normal text-white/50">MKE</span></p>
+                <div class="bg-surface-light p-4 rounded-xl border border-white/5">
+                    <div class="flex items-center gap-2 text-accent-text"><span class="material-symbols-outlined">local_fire_department</span><span class="text-xs font-bold uppercase">Burned</span></div>
+                    <p class="text-xl font-bold" id="display-burned">0 MKE</p>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex flex-col gap-3">
-                <button id="btn-ignite" class="relative w-full h-14 bg-primary hover:bg-primary-glow rounded-xl flex items-center justify-center gap-2 text-white font-bold tracking-wider transition-all shadow-[0_0_20px_rgba(173,43,238,0.4)] group overflow-hidden">
-                    <div class="absolute inset-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%)] -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    <span class="material-symbols-outlined relative z-10">local_fire_department</span>
-                    <span class="relative z-10">IGNITE (BURN MORE)</span>
+                <button id="btn-ignite" class="w-full h-14 bg-primary hover:bg-primary-glow rounded-xl flex items-center justify-center gap-2 text-white font-bold tracking-wider shadow-lg">
+                    <span class="material-symbols-outlined">local_fire_department</span>
+                    <span>IGNITE (BURN MORE)</span>
                 </button>
-                
-                <button id="btn-claim" class="w-full h-12 bg-surface hover:bg-surface-light border border-primary/30 rounded-xl flex items-center justify-center gap-2 text-accent-text font-bold tracking-wider transition-all">
+                <button id="btn-claim" class="w-full h-12 bg-surface hover:bg-surface-light border border-primary/30 rounded-xl flex items-center justify-center gap-2 text-accent-text font-bold tracking-wider">
                     <span class="material-symbols-outlined">download</span>
                     <span>CLAIM REWARDS</span>
                 </button>
             </div>
-
-            <!-- Mission Log -->
-            <div class="mt-2">
-                <div class="flex items-center justify-between mb-4 px-1">
-                    <h3 class="text-white text-lg font-bold uppercase tracking-wide flex items-center gap-2">
-                        <span class="material-symbols-outlined text-accent-text">history</span>
-                        Mission Log
-                    </h3>
-                    <span class="text-xs text-primary cursor-pointer hover:underline">View All</span>
-                </div>
-                
-                <div class="bg-surface rounded-xl border border-white/5 overflow-hidden" id="mission-log">
-                    <div class="p-8 text-center text-white/40">
-                        <span class="material-symbols-outlined text-4xl mb-2 block">history_toggle_off</span>
-                        <p class="text-sm">ยังไม่มีประวัติธุรกรรม</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="h-6"></div>
         </div>
     </div>
 
     <script>
-        // ============================================
-        // CONFIGURATION
-        // ============================================
-        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
+        // CONFIG
+        const SEPOLIA_CHAIN_ID = '0xaa36a7';
         const SEPOLIA_CHAIN_ID_DECIMAL = 11155111;
-        
         const contractAddress = "0x2D9C2f2d48297CFDeAF79b66c29212A8880Ae7bC";
         const tokenAddress = "0x3A2E8B9F4073357597A8f80905D6a3E2197179F2";
-        
+
         const contractABI = [
             "function upgradeTier(uint256 amount) public",
             "function claimCredits() public",
             "function userInfo(address user) public view returns (uint256 tier, uint256 balance, uint256 lastClaim)"
         ];
-        
+
         const tokenABI = [
             "function balanceOf(address owner) view returns (uint256)",
             "function decimals() view returns (uint8)",
-            "function symbol() view returns (string)",
-            "function name() view returns (string)"
+            "function symbol() view returns (string)"
         ];
 
-        // ============================================
-        // GLOBAL VARIABLES
-        // ============================================
-        let provider;
-        let signer;
-        let contract;
-        let tokenContract;
-        let userAddress;
-        let isConnected = false;
+        let provider, signer, contract, tokenContract, userAddress, isConnected = false;
 
-        // ============================================
-        // NETWORK FUNCTIONS
-        // ============================================
-        async function switchToSepolia() {
-            try {
-                console.log("🔄 Switching to Sepolia Testnet...");
-                
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: SEPOLIA_CHAIN_ID }],
-                });
-                
-                console.log("✅ Switched to Sepolia");
-                return true;
-            } catch (switchError) {
-                // Error code 4902 means the chain hasn't been added to MetaMask
-                if (switchError.code === 4902) {
-                    try {
-                        console.log("➕ Adding Sepolia network...");
-                        
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: SEPOLIA_CHAIN_ID,
-                                chainName: 'Sepolia Testnet',
-                                nativeCurrency: {
-                                    name: 'Sepolia ETH',
-                                    symbol: 'SepoliaETH',
-                                    decimals: 18
-                                },
-                                rpcUrls: ['https://sepolia.infura.io/v3/'],
-                                blockExplorerUrls: ['https://sepolia.etherscan.io']
-                            }],
-                        });
-                        
-                        console.log("✅ Sepolia network added and switched");
-                        return true;
-                    } catch (addError) {
-                        console.error("❌ Failed to add Sepolia network:", addError);
-                        alert("❌ ไม่สามารถเพิ่มเครือข่าย Sepolia ได้\n\nกรุณาเพิ่ม Sepolia Testnet เองใน MetaMask");
-                        return false;
-                    }
-                } else if (switchError.code === 4001) {
-                    alert("❌ คุณปฏิเสธการสลับเครือข่าย\n\nกรุณาสลับไปที่ Sepolia Testnet เพื่อใช้งาน");
-                    return false;
-                } else {
-                    console.error("❌ Failed to switch network:", switchError);
-                    alert("❌ ไม่สามารถสลับเครือข่ายได้: " + switchError.message);
-                    return false;
-                }
-            }
-        }
-
+        // FUNCTIONS
         async function checkAndSwitchNetwork() {
-            try {
-                const network = await provider.getNetwork();
-                console.log("Current network:", network.name, "Chain ID:", network.chainId);
-                
-                if (network.chainId !== SEPOLIA_CHAIN_ID_DECIMAL) {
-                    const confirmSwitch = confirm(
-                        `⚠️ คุณกำลังอยู่บนเครือข่าย: ${network.name}\n\n` +
-                        `กรุณาสลับไปที่ Sepolia Testnet เพื่อใช้งาน\n\n` +
-                        `กด OK เพื่อสลับเครือข่ายอัตโนมัติ`
-                    );
-                    
-                    if (confirmSwitch) {
-                        return await switchToSepolia();
-                    } else {
-                        alert("❌ กรุณาสลับไปที่ Sepolia Testnet ด้วยตนเอง");
-                        return false;
-                    }
-                }
-                
-                console.log("✅ Already on Sepolia Testnet");
-                return true;
-            } catch (error) {
-                console.error("❌ Network check failed:", error);
-                return false;
-            }
-        }
-
-        // ============================================
-        // WALLET CONNECTION
-        // ============================================
-        async function initWeb3() {
-            if (typeof window.ethereum === 'undefined') {
-                alert("❌ กรุณาติดตั้ง MetaMask Extension ก่อนใช้งาน\n\nดาวน์โหลดได้ที่: https://metamask.io");
-                return false;
-            }
-
-            try {
-                console.log("🔄 Initializing Web3...");
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                
-                // Request account access
-                const accounts = await provider.send("eth_requestAccounts", []);
-                console.log("✅ Accounts received:", accounts);
-                
-                if (!accounts || accounts.length === 0) {
-                    alert("❌ ไม่พบ Account ใน MetaMask\n\nกรุณาสร้างหรือ Import Account ก่อน");
+            const network = await provider.getNetwork();
+            if (network.chainId !== SEPOLIA_CHAIN_ID_DECIMAL) {
+                try {
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_CHAIN_ID }] });
+                    return true;
+                } catch (err) {
+                    alert("กรุณาสลับเครือข่ายเป็น Sepolia Testnet");
                     return false;
                 }
+            }
+            return true;
+        }
+
+        async function initWeb3() {
+            if (!window.ethereum) return alert("Please install MetaMask");
+            try {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                if (!(await checkAndSwitchNetwork())) return;
                 
                 signer = provider.getSigner();
                 userAddress = await signer.getAddress();
-                console.log("✅ User Address:", userAddress);
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
                 
-                // Check and switch to Sepolia network
-                const networkOk = await checkAndSwitchNetwork();
-                if (!networkOk) {
-                    isConnected = false;
-                    return false;
-                }
-                
-                // Initialize main contract
-                try {
-                    contract = new ethers.Contract(contractAddress, contractABI, signer);
-                    console.log("✅ Main contract initialized:", contractAddress);
-                } catch (contractError) {
-                    console.error("❌ Failed to initialize main contract:", contractError);
-                    alert("⚠️ ไม่สามารถเชื่อมต่อกับ Contract หลักได้\n\nContract: " + contractAddress);
-                }
-                
-                // Initialize token contract
-                if (tokenAddress && tokenAddress !== "0x0000000000000000000000000000000000000000") {
-                    try {
-                        tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
-                        console.log("✅ Token contract initialized:", tokenAddress);
-                        
-                        const symbol = await tokenContract.symbol();
-                        console.log("✅ Token Symbol:", symbol);
-                    } catch (tokenError) {
-                        console.warn("⚠️ Token contract initialization failed:", tokenError.message);
-                        tokenContract = null;
-                    }
-                }
-                
-                // Update connection status
                 isConnected = true;
-                updateWalletUI();
-                
-                console.log("✅ Successfully connected to MKE Protocol on Sepolia");
-                alert("✅ เชื่อมต่อสำเร็จ!\n\n📍 Network: Sepolia Testnet\n💼 Address: " + userAddress.substring(0, 10) + "...");
-                
-                // Update all dashboard data
-                await Promise.all([
-                    updateDashboard(),
-                    updateWalletBalance()
-                ]);
-                
-                return true;
-            } catch (error) {
-                console.error("❌ Connection failed:", error);
-                isConnected = false;
-                
-                let errorMessage = "การเชื่อมต่อล้มเหลว\n\n";
-                
-                if (error.code === 4001) {
-                    errorMessage += "คุณปฏิเสธการเชื่อมต่อ\nกรุณาอนุญาตการเชื่อมต่อใน MetaMask";
-                } else if (error.code === -32002) {
-                    errorMessage += "กรุณาตรวจสอบ MetaMask\nมีคำขออนุญาตรออยู่";
-                } else {
-                    errorMessage += "Error: " + (error.message || "Unknown error");
-                }
-                
-                alert("❌ " + errorMessage);
-                return false;
-            }
+                updateUI();
+                updateDashboard();
+                alert("เชื่อมต่อสำเร็จ!");
+            } catch (error) { console.error(error); }
         }
 
-        // ============================================
-        // UI UPDATE FUNCTIONS
-        // ============================================
-        function updateWalletUI() {
-            const connectBtn = document.getElementById('btn-connect-wallet');
-            
-            if (isConnected && userAddress) {
-                const shortAddress = `${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
-                connectBtn.innerHTML = `
-                    <span class="material-symbols-outlined text-white text-[18px]">check_circle</span>
-                    <span class="text-xs font-bold tracking-wider text-white">${shortAddress}</span>
-                `;
-                connectBtn.classList.remove('hover:bg-primary-glow', 'bg-primary');
-                connectBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-            } else {
-                connectBtn.innerHTML = `
-                    <span class="material-symbols-outlined text-white text-[18px]">account_balance_wallet</span>
-                    <span class="text-xs font-bold tracking-wider text-white">CONNECT</span>
-                `;
-                connectBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-                connectBtn.classList.add('bg-primary', 'hover:bg-primary-glow');
-            }
-        }
-
-        async function updateWalletBalance() {
-            if (!isConnected || !signer) {
-                document.getElementById('display-wallet-balance').innerHTML = 
-                    `<span class="text-white/40">--</span> <span class="text-sm font-normal text-white/50">MKE</span>`;
-                return;
-            }
-
-            try {
-                console.log("💰 Fetching wallet balance...");
-                
-                if (tokenContract) {
-                    try {
-                        const [balance, decimals, symbol] = await Promise.all([
-                            tokenContract.balanceOf(userAddress),
-                            tokenContract.decimals(),
-                            tokenContract.symbol()
-                        ]);
-                        
-                        const formatted = ethers.utils.formatUnits(balance, decimals);
-                        
-                        document.getElementById('display-wallet-balance').innerHTML = 
-                            `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 2})} <span class="text-sm font-normal text-white/50">${symbol}</span>`;
-                        
-                        console.log("✅ Wallet Balance:", formatted, symbol);
-                        return;
-                    } catch (tokenError) {
-                        console.error("Token read error:", tokenError);
-                    }
-                }
-                
-                // Fallback: show native balance
-                const balance = await provider.getBalance(userAddress);
-                const formatted = ethers.utils.formatEther(balance);
-                
-                document.getElementById('display-wallet-balance').innerHTML = 
-                    `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 4})} <span class="text-sm font-normal text-white/50">SepoliaETH</span>`;
-                
-                console.log("✅ Native Balance:", formatted, "SepoliaETH");
-            } catch (error) {
-                console.error("❌ Balance fetch failed:", error);
-                document.getElementById('display-wallet-balance').innerHTML = 
-                    `<span class="text-red-400">Error</span>`;
+        function updateUI() {
+            const btn = document.getElementById('btn-connect-wallet');
+            if (isConnected) {
+                btn.innerHTML = `<span class='text-xs'>${userAddress.substring(0,6)}...${userAddress.substring(38)}</span>`;
+                btn.classList.replace('bg-primary', 'bg-green-600');
             }
         }
 
         async function updateDashboard() {
-            if (!contract || !signer || !isConnected) {
-                console.warn("Contract not ready or wallet not connected");
-                return;
-            }
-
-            try {
-                console.log("📊 Fetching dashboard data...");
-                const info = await contract.userInfo(userAddress);
-                
-                const tier = info.tier.toNumber();
-                const balance = ethers.utils.formatEther(info.balance);
-                const lastClaim = info.lastClaim.toNumber();
-                
-                console.log("Dashboard data:", { tier, balance, lastClaim });
-                
-                updateTierDisplay(tier);
-                
-                document.getElementById('display-burned').innerHTML = 
-                    `${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})} <span class="text-sm font-normal text-white/50">MKE</span>`;
-                
-                const currentTime = Math.floor(Date.now() / 1000);
-                const hoursSinceClaim = Math.max(0, Math.floor((currentTime - lastClaim) / 3600));
-                const pending = hoursSinceClaim * 10;
-                
-                document.getElementById('display-pending').innerHTML = 
-                    `${pending.toFixed(2)} <span class="text-sm font-normal text-white/50">MKE</span>`;
-                
-                const earned = pending * 0.8;
-                document.getElementById('display-earned').innerHTML = 
-                    `${earned.toFixed(2)} <span class="text-sm font-normal text-white/50">MKE</span>`;
-                
-                updateProgressBar(tier, parseFloat(balance));
-                
-                console.log("✅ Dashboard updated");
-            } catch (error) {
-                console.error("❌ Dashboard update failed:", error);
-                alert("⚠️ ไม่สามารถโหลดข้อมูลจาก Contract ได้\n\nError: " + error.message);
-            }
-        }
-
-        function updateTierDisplay(tier) {
-            let tierName = "Recruit";
-            let tierNumber = "Tier 0";
-            let boost = "1.0x";
+            if (!isConnected) return;
+            const info = await contract.userInfo(userAddress);
+            const balance = ethers.utils.formatEther(info.balance);
+            const tier = info.tier.toNumber();
             
-            if (tier === 1) {
-                tierName = "SOLDIER";
-                tierNumber = "Tier 1";
-                boost = "1.5x";
-            } else if (tier === 2) {
-                tierName = "COMMANDER";
-                tierNumber = "Tier 2";
-                boost = "2.0x";
-            } else if (tier >= 3) {
-                tierName = "ELITE";
-                tierNumber = `Tier ${tier}`;
-                boost = `${1.0 + (tier * 0.5)}x`;
-            }
+            document.getElementById('display-burned').innerText = `${parseFloat(balance).toFixed(2)} MKE`;
+            document.getElementById('display-tier').innerText = tier === 0 ? "Recruit" : "Tier " + tier;
             
-            document.getElementById('display-tier').textContent = tierName;
-            document.getElementById('display-tier-number').textContent = tierNumber;
-            document.getElementById('display-boost').innerHTML = 
-                `${boost} <span class="text-sm font-normal text-white/50">APR</span>`;
+            updateProgressBar(tier, parseFloat(balance));
+            
+            const tokenBal = await tokenContract.balanceOf(userAddress);
+            document.getElementById('display-wallet-balance').innerText = `${parseFloat(ethers.utils.formatEther(tokenBal)).toFixed(2)} MKE`;
         }
 
         function updateProgressBar(tier, burned) {
             const thresholds = [0, 1000, 5000, 10000, 20000];
             const nextTier = tier + 1;
-            
-            if (nextTier >= thresholds.length) {
-                document.getElementById('progress-text').textContent = "MAX TIER";
-                document.getElementById('progress-bar').style.width = "100%";
-                document.getElementById('progress-percent').textContent = "100%";
-                return;
-            }
-            
-            const nextThreshold = thresholds[
-            // ... (ต่อจากส่วนที่ขาดหายไป)
+            if (nextTier >= thresholds.length) return;
+
             const nextThreshold = thresholds[nextTier];
             const prevThreshold = thresholds[tier];
+            const percentage = Math.min(100, ((burned - prevThreshold) / (nextThreshold - prevThreshold)) * 100);
 
-            const progress = burned - prevThreshold;
-            const needed = nextThreshold - prevThreshold;
-            const percentage = Math.min(100, Math.max(0, (progress / needed) * 100));
-
-            document.getElementById('progress-text').textContent = 
-                `${burned.toFixed(0)} / ${nextThreshold} MKE`;
-            document.getElementById('progress-bar').style.width = `${percentage}%`;
-            document.getElementById('progress-percent').textContent = `${percentage.toFixed(0)}%`;
+            document.getElementById('progress-bar').style.width = percentage + "%";
+            document.getElementById('progress-text').innerText = `${burned.toFixed(0)} / ${nextThreshold} MKE`;
+            document.getElementById('progress-percent').innerText = Math.floor(percentage) + "%";
         }
 
-        // ============================================
-        // TRANSACTION FUNCTIONS (ส่วนที่หายไป)
-        // ============================================
-        
         async function handleIgnite() {
-            if (!isConnected || !contract) {
-                alert("❌ กรุณาเชื่อมต่อ Wallet ก่อน");
-                return;
-            }
-
-            const amountInput = prompt("🔥 จำนวน MKE ที่ต้องการ Burn:", "1000");
-            if (!amountInput) return;
-
+            if (!isConnected) return alert("Connect Wallet First");
+            const amount = prompt("จำนวน MKE ที่จะ Burn:", "1000");
+            if (!amount) return;
             try {
-                const amountWei = ethers.utils.parseEther(amountInput);
-                console.log("🔥 Burning:", amountInput, "MKE");
-
-                // Check Gas Logic here (Optional)
-                const tx = await contract.upgradeTier(amountWei);
-                alert("⏳ กำลังดำเนินการ... กรุณารอสักครู่");
-                
+                const tx = await contract.upgradeTier(ethers.utils.parseEther(amount));
                 await tx.wait();
-                alert("✅ Burn สำเร็จ! ระดับของคุณถูกอัปเกรดแล้ว");
-                
+                alert("Burn Success!");
                 updateDashboard();
-            } catch (error) {
-                console.error("Burn failed:", error);
-                alert("❌ ทำรายการไม่สำเร็จ: " + (error.data?.message || error.message));
-            }
+            } catch (e) { alert("Error: " + e.message); }
         }
 
         async function handleClaim() {
-            if (!isConnected || !contract) return;
-
+            if (!isConnected) return;
             try {
                 const tx = await contract.claimCredits();
-                alert("⏳ กำลังเคลมรางวัล...");
                 await tx.wait();
-                alert("✅ เคลมรางวัลสำเร็จ!");
+                alert("Claim Success!");
                 updateDashboard();
-            } catch (error) {
-                console.error("Claim failed:", error);
-                alert("❌ เคลมไม่สำเร็จ: " + (error.data?.message || error.message));
-            }
+            } catch (e) { alert("Error: " + e.message); }
         }
 
-        // ============================================
-        // ⚡ COMMAND CENTER (คำสั่งทำให้ปุ่มกดได้)
-        // ============================================
+        // STARTUP
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 System Ready");
-            
-            // เชื่อมปุ่มเข้ากับฟังก์ชัน
-            const btnConnect = document.getElementById('btn-connect-wallet');
-            const btnIgnite = document.getElementById('btn-ignite');
-            const btnClaim = document.getElementById('btn-claim');
-
-            if (btnConnect) {
-                btnConnect.onclick = initWeb3; 
-                // หรือใช้ addEventListener ก็ได้
-                // btnConnect.addEventListener('click', initWeb3);
-            }
-
-            if (btnIgnite) btnIgnite.onclick = handleIgnite;
-            if (btnClaim) btnClaim.onclick = handleClaim;
+            document.getElementById('btn-connect-wallet').onclick = initWeb3;
+            document.getElementById('btn-ignite').onclick = handleIgnite;
+            document.getElementById('btn-claim').onclick = handleClaim;
         });
-
-    </script> 
-    </body>
+    </script>
+</body>
 </html>
