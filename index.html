@@ -13,11 +13,11 @@
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     
+    <!-- ⚠️ IMPORTANT: Load Ethers.js FIRST before any other scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <!-- Ethers.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     
     <script>
         tailwind.config = {
@@ -103,8 +103,8 @@
                             </div>
                             <div class="flex flex-col justify-center">
                                 <p class="text-accent-text text-xs font-bold tracking-widest uppercase mb-1">Current Clearance</p>
-                                <h2 class="text-2xl font-bold leading-none text-white" id="display-tier">--</h2>
-                                <p class="text-white/60 text-sm mt-1" id="display-tier-number">--</p>
+                                <h2 class="text-2xl font-bold leading-none text-white" id="display-tier">Recruit</h2>
+                                <p class="text-white/60 text-sm mt-1" id="display-tier-number">Tier 0</p>
                             </div>
                         </div>
                         <span class="material-symbols-outlined text-primary animate-pulse">rocket_launch</span>
@@ -114,7 +114,7 @@
                     <div class="mt-2">
                         <div class="flex justify-between items-end mb-2">
                             <span class="text-sm font-medium text-white">Progress to Next Tier</span>
-                            <span class="text-xs font-mono text-primary" id="progress-text">-- / --</span>
+                            <span class="text-xs font-mono text-primary" id="progress-text">0 / 1000 MKE</span>
                         </div>
                         <div class="h-3 w-full bg-[#150b1a] rounded-full overflow-hidden border border-white/5 relative">
                             <div class="h-full bg-primary relative shadow-[0_0_10px_#ad2bee]" id="progress-bar" style="width: 0%; background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem;"></div>
@@ -135,7 +135,7 @@
                         <span class="material-symbols-outlined text-[20px]">wallet</span>
                         <span class="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
                     </div>
-                    <p class="text-xl font-bold text-white tracking-tight" id="display-wallet-balance">0 <span class="text-sm font-normal text-white/50">MKE</span></p>
+                    <p class="text-xl font-bold text-white tracking-tight" id="display-wallet-balance"><span class="text-white/40">--</span> <span class="text-sm font-normal text-white/50">MKE</span></p>
                 </div>
                 
                 <!-- Total Burned -->
@@ -166,11 +166,11 @@
                 </div>
                 
                 <!-- Pending -->
-                <div class="bg-surface-light p-4 rounded-xl border border-primary/30 flex flex-col gap-2 relative overflow-hidden">
+                <div class="bg-surface-light p-4 rounded-xl border border-primary/30 flex flex-col gap-2 relative overflow-hidden col-span-2">
                     <div class="absolute right-0 top-0 w-16 h-16 bg-primary/10 rounded-bl-full"></div>
                     <div class="flex items-center gap-2 text-primary">
                         <span class="material-symbols-outlined text-[20px]">hourglass_top</span>
-                        <span class="text-xs font-bold uppercase tracking-wider">Pending</span>
+                        <span class="text-xs font-bold uppercase tracking-wider">Pending Rewards</span>
                     </div>
                     <p class="text-xl font-bold text-white tracking-tight" id="display-pending">0 <span class="text-sm font-normal text-white/50">MKE</span></p>
                 </div>
@@ -201,7 +201,6 @@
                 </div>
                 
                 <div class="bg-surface rounded-xl border border-white/5 overflow-hidden" id="mission-log">
-                    <!-- Logs will be inserted here -->
                     <div class="p-8 text-center text-white/40">
                         <span class="material-symbols-outlined text-4xl mb-2 block">history_toggle_off</span>
                         <p class="text-sm">ยังไม่มีประวัติธุรกรรม</p>
@@ -214,9 +213,14 @@
     </div>
 
     <script>
-        // Smart Contract Configuration
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
+        const SEPOLIA_CHAIN_ID_DECIMAL = 11155111;
+        
         const contractAddress = "0x2D9C2f2d48297CFDeAF79b66c29212A8880Ae7bC";
-        const tokenAddress = "0x3A2E8B9F4073357597A8f80905D6a3E2197179F2"; // MKE Token Contract Address
+        const tokenAddress = "0x3A2E8B9F4073357597A8f80905D6a3E2197179F2";
         
         const contractABI = [
             "function upgradeTier(uint256 amount) public",
@@ -231,7 +235,9 @@
             "function name() view returns (string)"
         ];
 
-        // Global Variables
+        // ============================================
+        // GLOBAL VARIABLES
+        // ============================================
         let provider;
         let signer;
         let contract;
@@ -239,7 +245,90 @@
         let userAddress;
         let isConnected = false;
 
-        // Initialize Web3
+        // ============================================
+        // NETWORK FUNCTIONS
+        // ============================================
+        async function switchToSepolia() {
+            try {
+                console.log("🔄 Switching to Sepolia Testnet...");
+                
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: SEPOLIA_CHAIN_ID }],
+                });
+                
+                console.log("✅ Switched to Sepolia");
+                return true;
+            } catch (switchError) {
+                // Error code 4902 means the chain hasn't been added to MetaMask
+                if (switchError.code === 4902) {
+                    try {
+                        console.log("➕ Adding Sepolia network...");
+                        
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: SEPOLIA_CHAIN_ID,
+                                chainName: 'Sepolia Testnet',
+                                nativeCurrency: {
+                                    name: 'Sepolia ETH',
+                                    symbol: 'SepoliaETH',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://sepolia.infura.io/v3/'],
+                                blockExplorerUrls: ['https://sepolia.etherscan.io']
+                            }],
+                        });
+                        
+                        console.log("✅ Sepolia network added and switched");
+                        return true;
+                    } catch (addError) {
+                        console.error("❌ Failed to add Sepolia network:", addError);
+                        alert("❌ ไม่สามารถเพิ่มเครือข่าย Sepolia ได้\n\nกรุณาเพิ่ม Sepolia Testnet เองใน MetaMask");
+                        return false;
+                    }
+                } else if (switchError.code === 4001) {
+                    alert("❌ คุณปฏิเสธการสลับเครือข่าย\n\nกรุณาสลับไปที่ Sepolia Testnet เพื่อใช้งาน");
+                    return false;
+                } else {
+                    console.error("❌ Failed to switch network:", switchError);
+                    alert("❌ ไม่สามารถสลับเครือข่ายได้: " + switchError.message);
+                    return false;
+                }
+            }
+        }
+
+        async function checkAndSwitchNetwork() {
+            try {
+                const network = await provider.getNetwork();
+                console.log("Current network:", network.name, "Chain ID:", network.chainId);
+                
+                if (network.chainId !== SEPOLIA_CHAIN_ID_DECIMAL) {
+                    const confirmSwitch = confirm(
+                        `⚠️ คุณกำลังอยู่บนเครือข่าย: ${network.name}\n\n` +
+                        `กรุณาสลับไปที่ Sepolia Testnet เพื่อใช้งาน\n\n` +
+                        `กด OK เพื่อสลับเครือข่ายอัตโนมัติ`
+                    );
+                    
+                    if (confirmSwitch) {
+                        return await switchToSepolia();
+                    } else {
+                        alert("❌ กรุณาสลับไปที่ Sepolia Testnet ด้วยตนเอง");
+                        return false;
+                    }
+                }
+                
+                console.log("✅ Already on Sepolia Testnet");
+                return true;
+            } catch (error) {
+                console.error("❌ Network check failed:", error);
+                return false;
+            }
+        }
+
+        // ============================================
+        // WALLET CONNECTION
+        // ============================================
         async function initWeb3() {
             if (typeof window.ethereum === 'undefined') {
                 alert("❌ กรุณาติดตั้ง MetaMask Extension ก่อนใช้งาน\n\nดาวน์โหลดได้ที่: https://metamask.io");
@@ -263,9 +352,12 @@
                 userAddress = await signer.getAddress();
                 console.log("✅ User Address:", userAddress);
                 
-                // Get network info
-                const network = await provider.getNetwork();
-                console.log("✅ Network:", network.name, "Chain ID:", network.chainId);
+                // Check and switch to Sepolia network
+                const networkOk = await checkAndSwitchNetwork();
+                if (!networkOk) {
+                    isConnected = false;
+                    return false;
+                }
                 
                 // Initialize main contract
                 try {
@@ -276,28 +368,26 @@
                     alert("⚠️ ไม่สามารถเชื่อมต่อกับ Contract หลักได้\n\nContract: " + contractAddress);
                 }
                 
-                // Initialize token contract if available
+                // Initialize token contract
                 if (tokenAddress && tokenAddress !== "0x0000000000000000000000000000000000000000") {
                     try {
                         tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
                         console.log("✅ Token contract initialized:", tokenAddress);
                         
-                        // Test token contract
                         const symbol = await tokenContract.symbol();
                         console.log("✅ Token Symbol:", symbol);
                     } catch (tokenError) {
                         console.warn("⚠️ Token contract initialization failed:", tokenError.message);
                         tokenContract = null;
                     }
-                } else {
-                    console.warn("⚠️ Token address not set");
                 }
                 
                 // Update connection status
                 isConnected = true;
                 updateWalletUI();
                 
-                console.log("✅ Connected to MKE Protocol");
+                console.log("✅ Successfully connected to MKE Protocol on Sepolia");
+                alert("✅ เชื่อมต่อสำเร็จ!\n\n📍 Network: Sepolia Testnet\n💼 Address: " + userAddress.substring(0, 10) + "...");
                 
                 // Update all dashboard data
                 await Promise.all([
@@ -325,7 +415,9 @@
             }
         }
 
-        // Update Wallet UI
+        // ============================================
+        // UI UPDATE FUNCTIONS
+        // ============================================
         function updateWalletUI() {
             const connectBtn = document.getElementById('btn-connect-wallet');
             
@@ -335,7 +427,7 @@
                     <span class="material-symbols-outlined text-white text-[18px]">check_circle</span>
                     <span class="text-xs font-bold tracking-wider text-white">${shortAddress}</span>
                 `;
-                connectBtn.classList.remove('hover:bg-primary-glow');
+                connectBtn.classList.remove('hover:bg-primary-glow', 'bg-primary');
                 connectBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             } else {
                 connectBtn.innerHTML = `
@@ -343,11 +435,10 @@
                     <span class="text-xs font-bold tracking-wider text-white">CONNECT</span>
                 `;
                 connectBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-                connectBtn.classList.add('hover:bg-primary-glow');
+                connectBtn.classList.add('bg-primary', 'hover:bg-primary-glow');
             }
         }
 
-        // Update Wallet Balance
         async function updateWalletBalance() {
             if (!isConnected || !signer) {
                 document.getElementById('display-wallet-balance').innerHTML = 
@@ -358,20 +449,13 @@
             try {
                 console.log("💰 Fetching wallet balance...");
                 
-                // Method 1: Try using token contract
                 if (tokenContract) {
                     try {
-                        console.log("Attempting to read token balance from:", tokenAddress);
-                        
                         const [balance, decimals, symbol] = await Promise.all([
                             tokenContract.balanceOf(userAddress),
                             tokenContract.decimals(),
                             tokenContract.symbol()
                         ]);
-                        
-                        console.log("Raw balance:", balance.toString());
-                        console.log("Decimals:", decimals);
-                        console.log("Symbol:", symbol);
                         
                         const formatted = ethers.utils.formatUnits(balance, decimals);
                         
@@ -381,69 +465,46 @@
                         console.log("✅ Wallet Balance:", formatted, symbol);
                         return;
                     } catch (tokenError) {
-                        console.error("Token contract error:", tokenError.message);
-                        console.error("Full error:", tokenError);
+                        console.error("Token read error:", tokenError);
                     }
                 }
                 
-                // Method 2: Fallback to native balance
-                console.log("Fetching native balance...");
+                // Fallback: show native balance
                 const balance = await provider.getBalance(userAddress);
                 const formatted = ethers.utils.formatEther(balance);
                 
                 document.getElementById('display-wallet-balance').innerHTML = 
-                    `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 4})} <span class="text-sm font-normal text-white/50">Native</span>`;
+                    `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 4})} <span class="text-sm font-normal text-white/50">SepoliaETH</span>`;
                 
-                console.log("✅ Native Balance:", formatted);
+                console.log("✅ Native Balance:", formatted, "SepoliaETH");
             } catch (error) {
-                console.error("❌ Failed to fetch balance:", error);
+                console.error("❌ Balance fetch failed:", error);
                 document.getElementById('display-wallet-balance').innerHTML = 
-                    `<span class="text-red-400">Error</span> <span class="text-sm font-normal text-white/50">MKE</span>`;
+                    `<span class="text-red-400">Error</span>`;
             }
         }
 
-        // Update Dashboard
         async function updateDashboard() {
             if (!contract || !signer || !isConnected) {
-                console.warn("Contract not initialized or wallet not connected");
-                // Show default values when not connected
-                document.getElementById('display-tier').textContent = 'Recruit';
-                document.getElementById('display-tier-number').textContent = 'Tier 0';
-                document.getElementById('display-burned').innerHTML = '0 <span class="text-sm font-normal text-white/50">MKE</span>';
-                document.getElementById('display-pending').innerHTML = '0 <span class="text-sm font-normal text-white/50">MKE</span>';
-                document.getElementById('display-boost').innerHTML = '1.0x <span class="text-sm font-normal text-white/50">APR</span>';
-                document.getElementById('display-earned').innerHTML = '0 <span class="text-sm font-normal text-white/50">MKE</span>';
+                console.warn("Contract not ready or wallet not connected");
                 return;
             }
 
             try {
-                console.log("📊 Fetching user info from contract...");
+                console.log("📊 Fetching dashboard data...");
                 const info = await contract.userInfo(userAddress);
-                
-                console.log("Raw contract data:", {
-                    tier: info.tier.toString(),
-                    balance: info.balance.toString(),
-                    lastClaim: info.lastClaim.toString()
-                });
                 
                 const tier = info.tier.toNumber();
                 const balance = ethers.utils.formatEther(info.balance);
                 const lastClaim = info.lastClaim.toNumber();
                 
-                console.log("Parsed data:", {
-                    tier,
-                    balance,
-                    lastClaim
-                });
+                console.log("Dashboard data:", { tier, balance, lastClaim });
                 
-                // Update Tier Display
                 updateTierDisplay(tier);
                 
-                // Update Burned Amount
                 document.getElementById('display-burned').innerHTML = 
                     `${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})} <span class="text-sm font-normal text-white/50">MKE</span>`;
                 
-                // Calculate Pending Rewards (10 MKE per hour)
                 const currentTime = Math.floor(Date.now() / 1000);
                 const hoursSinceClaim = Math.max(0, Math.floor((currentTime - lastClaim) / 3600));
                 const pending = hoursSinceClaim * 10;
@@ -451,27 +512,19 @@
                 document.getElementById('display-pending').innerHTML = 
                     `${pending.toFixed(2)} <span class="text-sm font-normal text-white/50">MKE</span>`;
                 
-                // Mock earned value (you can replace this with actual contract data)
-                const earned = pending * 0.8; // Example calculation
+                const earned = pending * 0.8;
                 document.getElementById('display-earned').innerHTML = 
                     `${earned.toFixed(2)} <span class="text-sm font-normal text-white/50">MKE</span>`;
                 
-                // Update Progress Bar
                 updateProgressBar(tier, parseFloat(balance));
                 
-                console.log("✅ Dashboard updated successfully");
+                console.log("✅ Dashboard updated");
             } catch (error) {
-                console.error("Failed to update dashboard:", error);
-                console.error("Error details:", {
-                    message: error.message,
-                    code: error.code,
-                    data: error.data
-                });
-                alert("⚠️ ไม่สามารถโหลดข้อมูลจาก Contract ได้\n\nกรุณาตรวจสอบ:\n- Network ที่เชื่อมต่อถูกต้อง\n- Contract Address ถูกต้อง\n- คุณมีสิทธิ์เข้าถึง Contract");
+                console.error("❌ Dashboard update failed:", error);
+                alert("⚠️ ไม่สามารถโหลดข้อมูลจาก Contract ได้\n\nError: " + error.message);
             }
         }
 
-        // Update Tier Display
         function updateTierDisplay(tier) {
             let tierName = "Recruit";
             let tierNumber = "Tier 0";
@@ -497,10 +550,8 @@
                 `${boost} <span class="text-sm font-normal text-white/50">APR</span>`;
         }
 
-        // Update Progress Bar
         function updateProgressBar(tier, burned) {
             const thresholds = [0, 1000, 5000, 10000, 20000];
-            const current = burned;
             const nextTier = tier + 1;
             
             if (nextTier >= thresholds.length) {
@@ -510,193 +561,4 @@
                 return;
             }
             
-            const nextThreshold = thresholds[nextTier];
-            const prevThreshold = thresholds[tier];
-            
-            const progress = current - prevThreshold;
-            const needed = nextThreshold - prevThreshold;
-            const percentage = Math.min(100, Math.max(0, (progress / needed) * 100));
-            
-            document.getElementById('progress-text').textContent = 
-                `${current.toFixed(0)} / ${nextThreshold} MKE`;
-            document.getElementById('progress-bar').style.width = `${percentage}%`;
-            document.getElementById('progress-percent').textContent = `${percentage.toFixed(0)}%`;
-        }
-
-        // Handle Connect Wallet
-        async function handleConnectWallet() {
-            if (isConnected) {
-                alert(`คุณเชื่อมต่ออยู่แล้ว\n\nที่อยู่: ${userAddress}`);
-                return;
-            }
-            
-            await initWeb3();
-        }
-
-        // Handle Ignite (Burn)
-        async function handleIgnite() {
-            if (!isConnected) {
-                alert("❌ กรุณาเชื่อมต่อ Wallet ก่อน");
-                return;
-            }
-            
-            if (!contract) {
-                alert("❌ Contract ยังไม่พร้อมใช้งาน\nกรุณาลองเชื่อมต่อใหม่");
-                return;
-            }
-
-            const amountInput = prompt("💰 จำนวน MKE ที่ต้องการ Burn:", "1000");
-            if (!amountInput || amountInput.trim() === "") return;
-            
-            const amount = parseFloat(amountInput);
-            if (isNaN(amount) || amount <= 0) {
-                alert("❌ กรุณาใส่จำนวนที่ถูกต้อง");
-                return;
-            }
-
-            try {
-                const amountWei = ethers.utils.parseEther(amountInput);
-                
-                console.log("🔥 Initiating burn transaction...");
-                console.log("Amount:", amountInput, "MKE");
-                console.log("Amount (Wei):", amountWei.toString());
-                
-                // Estimate gas first
-                try {
-                    const gasEstimate = await contract.estimateGas.upgradeTier(amountWei);
-                    console.log("⛽ Estimated gas:", gasEstimate.toString());
-                } catch (gasError) {
-                    console.error("Gas estimation failed:", gasError);
-                    if (gasError.message.includes("insufficient funds")) {
-                        alert("❌ ยอดเงินไม่พอสำหรับค่า Gas Fee");
-                        return;
-                    }
-                }
-                
-                const tx = await contract.upgradeTier(amountWei);
-                
-                alert(`🔥 กำลังดำเนินการ Burn ${amountInput} MKE\n\n✅ Transaction Hash:\n${tx.hash}\n\n⏳ โปรดรอการยืนยันธุรกรรม...`);
-                
-                console.log("📝 Transaction sent:", tx.hash);
-                
-                const receipt = await tx.wait();
-                console.log("✅ Transaction confirmed:", receipt);
-                
-                alert(`✅ Burn สำเร็จ!\n\n🔥 เบิร์น: ${amountInput} MKE\n🎯 Block: ${receipt.blockNumber}\n⛽ Gas Used: ${receipt.gasUsed.toString()}\n\n🚀 ระดับ Tier ของคุณได้รับการอัปเกรดแล้ว!`);
-                
-                await Promise.all([
-                    updateDashboard(),
-                    updateWalletBalance()
-                ]);
-            } catch (error) {
-                console.error("❌ Burn failed:", error);
-                
-                let errorMsg = "การ Burn ล้มเหลว\n\n";
-                
-                if (error.code === 4001) {
-                    errorMsg += "คุณปฏิเสธธุรกรรม";
-                } else if (error.message.includes("insufficient funds")) {
-                    errorMsg += "ยอดเงินไม่เพียงพอ (รวมค่า Gas)";
-                } else if (error.error?.message) {
-                    errorMsg += error.error.message;
-                } else if (error.data?.message) {
-                    errorMsg += error.data.message;
-                } else {
-                    errorMsg += error.message || "Unknown error";
-                }
-                
-                alert("❌ " + errorMsg);
-            }
-        }
-
-        // Handle Claim
-        async function handleClaim() {
-            if (!isConnected) {
-                alert("❌ กรุณาเชื่อมต่อ Wallet ก่อน");
-                return;
-            }
-            
-            if (!contract) {
-                alert("❌ Contract ยังไม่พร้อมใช้งาน\nกรุณาลองเชื่อมต่อใหม่");
-                return;
-            }
-
-            try {
-                console.log("💎 Claiming rewards...");
-                
-                // Estimate gas first
-                try {
-                    const gasEstimate = await contract.estimateGas.claimCredits();
-                    console.log("⛽ Estimated gas:", gasEstimate.toString());
-                } catch (gasError) {
-                    console.error("Gas estimation failed:", gasError);
-                    if (gasError.message.includes("insufficient funds")) {
-                        alert("❌ ยอดเงินไม่พอสำหรับค่า Gas Fee");
-                        return;
-                    } else if (gasError.message.includes("No rewards")) {
-                        alert("⚠️ ยังไม่มีรางวัลให้รับในขณะนี้");
-                        return;
-                    }
-                }
-                
-                const tx = await contract.claimCredits();
-                
-                alert(`💎 กำลังรับรางวัล...\n\n✅ Transaction Hash:\n${tx.hash}\n\n⏳ โปรดรอการยืนยันธุรกรรม`);
-                
-                console.log("📝 Transaction sent:", tx.hash);
-                
-                const receipt = await tx.wait();
-                console.log("✅ Transaction confirmed:", receipt);
-                
-                alert(`✅ รับรางวัลสำเร็จแล้ว!\n\n🎯 Block: ${receipt.blockNumber}\n⛽ Gas Used: ${receipt.gasUsed.toString()}`);
-                
-                await Promise.all([
-                    updateDashboard(),
-                    updateWalletBalance()
-                ]);
-            } catch (error) {
-                console.error("❌ Claim failed:", error);
-                
-                let errorMsg = "การรับรางวัลล้มเหลว\n\n";
-                
-                if (error.code === 4001) {
-                    errorMsg += "คุณปฏิเสธธุรกรรม";
-                } else if (error.message.includes("insufficient funds")) {
-                    errorMsg += "ยอดเงินไม่เพียงพอสำหรับค่า Gas";
-                } else if (error.error?.message) {
-                    errorMsg += error.error.message;
-                } else if (error.data?.message) {
-                    errorMsg += error.data.message;
-                } else {
-                    errorMsg += error.message || "Unknown error";
-                }
-                
-                alert("❌ " + errorMsg);
-            }
-        }
-
-        // Event Listeners
-        document.getElementById('btn-connect-wallet').addEventListener('click', handleConnectWallet);
-        document.getElementById('btn-ignite').addEventListener('click', handleIgnite);
-        document.getElementById('btn-claim').addEventListener('click', handleClaim);
-
-        // Listen for account changes
-        if (typeof window.ethereum !== 'undefined') {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                if (accounts.length > 0) {
-                    console.log("Account changed, reconnecting...");
-                    isConnected = false;
-                    initWeb3();
-                } else {
-                    isConnected = false;
-                    updateWalletUI();
-                }
-            });
-            
-            window.ethereum.on('chainChanged', () => {
-                window.location.reload();
-            });
-        }
-    </script>
-</body>
-</html>
+            const nextThreshold = thresholds[
