@@ -1,18 +1,24 @@
 <!DOCTYPE html>
 <html class="dark" lang="th">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>My Staked Assets - Retro Space</title>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="description" content="MKE Combustion - Burn tokens to upgrade tiers" />
+    <title>MKE Combustion | Retro Space</title>
 
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:wght,FILL@100..700,0..1" rel="stylesheet" />
 
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Ethers.js v6 -->
+    <script type="module">
+        import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.min.js';
+        window.ethers = ethers;
+    </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
     <script>
@@ -21,16 +27,23 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#ad2bee",
-                        "primary-glow": "#c65cf2",
-                        "background-light": "#f7f6f8",
-                        "background-dark": "#150b1a",
-                        "surface": "#2b1933",
-                        "surface-light": "#3c2348",
-                        "accent-text": "#b792c9",
+                        primary: {
+                            DEFAULT: "#ad2bee",
+                            glow: "#c65cf2",
+                            dark: "#8a1fc4"
+                        },
+                        bg: {
+                            dark: "#150b1a",
+                            surface: "#2b1933",
+                            "surface-light": "#3c2348"
+                        },
+                        text: {
+                            accent: "#b792c9",
+                            muted: "rgba(255,255,255,0.6)"
+                        }
                     },
                     fontFamily: {
-                        "display": ["Space Grotesk", "sans-serif"]
+                        display: ["Space Grotesk", "system-ui", "sans-serif"]
                     }
                 },
             },
@@ -38,205 +51,604 @@
     </script>
 
     <style>
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #150b1a; }
-        ::-webkit-scrollbar-thumb { background: #3c2348; border-radius: 3px; }
-        .glass-panel { background: rgba(43, 25, 51, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .neon-border { box-shadow: 0 0 10px rgba(173, 43, 238, 0.2); border: 1px solid rgba(173, 43, 238, 0.3); }
-        body { min-height: max(884px, 100dvh); }
+        @layer utilities {
+            /* Custom scrollbar */
+            ::-webkit-scrollbar { @apply w-1.5; }
+            ::-webkit-scrollbar-track { @apply bg-bg-dark; }
+            ::-webkit-scrollbar-thumb { @apply rounded-full bg-bg-surface-light; }
+            
+            /* Glass effect */
+            .glass {
+                @apply bg-bg-surface/70 backdrop-blur-xl border border-white/10;
+                -webkit-backdrop-filter: blur(12px);
+            }
+            
+            /* Neon glow */
+            .neon-glow {
+                @apply border border-primary/30 shadow-[0_0_20px_rgba(173,43,238,0.25)];
+            }
+            
+            /* Loading spinner */
+            .spinner {
+                @apply inline-block w-5 h-5 border-2 border-white/20 border-t-primary rounded-full animate-spin;
+            }
+        }
+
+        body {
+            @apply min-h-screen bg-bg-dark text-white font-display antialiased;
+            background-image: radial-gradient(rgba(173, 43, 238, 0.15) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
     </style>
 </head>
-<body class="antialiased">
-    <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-dark overflow-x-hidden font-display text-white">
-        <div class="fixed inset-0 pointer-events-none z-0 opacity-20" style="background-image: radial-gradient(#ad2bee 1px, transparent 1px); background-size: 30px 30px;"></div>
+<body>
+    <div class="relative flex min-h-screen flex-col overflow-x-hidden">
+        <!-- Background grid -->
+        <div class="fixed inset-0 pointer-events-none z-0 opacity-20"></div>
 
-        <div class="sticky top-0 z-50 glass-panel px-4 py-3 flex items-center justify-between shadow-lg">
-            <button class="flex size-10 items-center justify-center rounded-full hover:bg-white/10 transition-colors">
-                <span class="material-symbols-outlined text-white">arrow_back</span>
-            </button>
-            <h1 class="text-lg font-bold tracking-tight uppercase">MKE Combustion</h1>
-            <button id="btn-connect-wallet" class="flex items-center gap-2 bg-primary hover:bg-primary-glow px-4 py-2 rounded-full border border-primary/30 transition-all">
-                <span class="material-symbols-outlined text-white text-[18px]">account_balance_wallet</span>
-                <span class="text-xs font-bold tracking-wider text-white">CONNECT</span>
-            </button>
-        </div>
+        <!-- Header -->
+        <header class="sticky top-0 z-50 glass shadow-lg">
+            <div class="px-4 py-3 flex items-center justify-between">
+                <button id="btn-back" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-all duration-300">
+                    <span class="material-symbols-rounded">arrow_back</span>
+                </button>
+                
+                <h1 class="text-lg font-bold tracking-tight uppercase bg-gradient-to-r from-white to-primary bg-clip-text text-transparent">
+                    MKE Combustion
+                </h1>
 
-        <div class="relative z-10 flex flex-col gap-6 p-4">
-            <div class="w-full bg-surface rounded-2xl p-5 neon-border relative overflow-hidden group">
-                <div class="flex flex-col gap-4 relative z-10">
-                    <div class="flex items-start justify-between">
-                        <div class="flex gap-4">
-                            <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-primary/50">
-                                <img alt="Rank" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
-                            </div>
-                            <div class="flex flex-col justify-center">
-                                <p class="text-accent-text text-xs font-bold tracking-widest uppercase mb-1">Current Clearance</p>
-                                <h2 class="text-2xl font-bold leading-none text-white" id="display-tier">Recruit</h2>
-                                <p class="text-white/60 text-sm mt-1" id="display-tier-number">Tier 0</p>
-                            </div>
-                        </div>
-                        <span class="material-symbols-outlined text-primary animate-pulse">rocket_launch</span>
-                    </div>
+                <button id="btn-connect-wallet" class="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs tracking-wider transition-all duration-300
+                    bg-primary hover:bg-primary-glow text-white shadow-lg shadow-primary/20">
+                    <span class="material-symbols-rounded text-sm">wallet</span>
+                    <span id="wallet-text">CONNECT</span>
+                </button>
+            </div>
+        </header>
 
-                    <div class="mt-2">
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="text-sm font-medium text-white">Progress to Next Tier</span>
-                            <span class="text-xs font-mono text-primary" id="progress-text">0 / 1000 MKE</span>
+        <!-- Main Content -->
+        <main class="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 py-6 grid gap-6">
+            
+            <!-- Tier Card -->
+            <section class="glass rounded-2xl p-6 neon-glow transition-all duration-300 hover:shadow-primary/40">
+                <div class="flex items-start justify-between mb-6">
+                    <div class="flex gap-4">
+                        <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-primary/50 shadow-lg shadow-primary/20 flex-shrink-0">
+                            <img alt="Tier Rank" class="w-full h-full object-cover bg-gradient-to-br from-primary/20 to-bg-surface" 
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' text-anchor='middle' fill='%23ad2bee'%3E👑%3C/text%3E%3C/svg%3E" />
                         </div>
-                        <div class="h-3 w-full bg-[#150b1a] rounded-full overflow-hidden border border-white/5">
-                            <div class="h-full bg-primary" id="progress-bar" style="width: 0%;"></div>
-                        </div>
-                        <div class="flex justify-between mt-2">
-                            <p class="text-xs text-white/40">Next Reward: Boost Increase</p>
-                            <p class="text-xs text-accent-text font-bold" id="progress-percent">0%</p>
+                        <div>
+                            <p class="text-text-accent text-xs font-bold tracking-widest uppercase mb-1">Current Clearance</p>
+                            <h2 class="text-3xl font-bold text-white" id="display-tier">Recruit</h2>
+                            <p class="text-text-muted text-sm mt-1" id="display-tier-number">Tier 0</p>
                         </div>
                     </div>
+                    <span class="material-symbols-rounded text-primary text-3xl animate-pulse hidden sm:block">rocket_launch</span>
                 </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-gradient-to-br from-primary/20 to-primary/5 p-4 rounded-xl border border-primary/40">
-                    <div class="flex items-center gap-2 text-primary"><span class="material-symbols-outlined">wallet</span><span class="text-xs font-bold uppercase">Balance</span></div>
-                    <p class="text-xl font-bold" id="display-wallet-balance">-- MKE</p>
+                <!-- Progress Bar -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium">Progress to Next Tier</span>
+                        <span class="text-sm font-mono font-bold text-primary" id="progress-text">0 / 1000 MKE</span>
+                    </div>
+                    <div class="h-4 w-full bg-bg-surface rounded-full overflow-hidden border border-white/5 relative">
+                        <div class="h-full bg-gradient-to-r from-primary to-primary-glow rounded-full transition-all duration-700 ease-out" 
+                             id="progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <p class="text-text-muted">Next Reward: Boost Increase</p>
+                        <p class="text-text-accent font-bold" id="progress-percent">0%</p>
+                    </div>
                 </div>
-                <div class="bg-surface-light p-4 rounded-xl border border-white/5">
-                    <div class="flex items-center gap-2 text-accent-text"><span class="material-symbols-outlined">local_fire_department</span><span class="text-xs font-bold uppercase">Burned</span></div>
-                    <p class="text-xl font-bold" id="display-burned">0 MKE</p>
-                </div>
-            </div>
+            </section>
 
-            <div class="flex flex-col gap-3">
-                <button id="btn-ignite" class="w-full h-14 bg-primary hover:bg-primary-glow rounded-xl flex items-center justify-center gap-2 text-white font-bold tracking-wider shadow-lg">
-                    <span class="material-symbols-outlined">local_fire_department</span>
+            <!-- Stats Grid -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Balance Card -->
+                <div class="glass rounded-xl p-5 border border-primary/20 hover:border-primary/50 transition-all duration-300">
+                    <div class="flex items-center gap-3 text-primary mb-2">
+                        <span class="material-symbols-rounded">account_balance_wallet</span>
+                        <span class="text-xs font-bold uppercase tracking-wider">Balance</span>
+                    </div>
+                    <p class="text-2xl font-bold text-white" id="display-wallet-balance">
+                        <span class="spinner"></span>
+                    </p>
+                </div>
+
+                <!-- Burned Card -->
+                <div class="glass rounded-xl p-5 border border-white/10 hover:border-primary/30 transition-all duration-300">
+                    <div class="flex items-center gap-3 text-text-accent mb-2">
+                        <span class="material-symbols-rounded">local_fire_department</span>
+                        <span class="text-xs font-bold uppercase tracking-wider">Burned</span>
+                    </div>
+                    <p class="text-2xl font-bold text-white" id="display-burned">
+                        <span class="spinner"></span>
+                    </p>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <section class="flex flex-col gap-4 pt-2">
+                <button id="btn-ignite" class="w-full h-14 glass rounded-xl flex items-center justify-center gap-3 text-white font-bold tracking-wider 
+                    bg-gradient-to-r from-primary/20 to-primary/5 hover:from-primary/30 hover:to-primary/15 
+                    transition-all duration-300 hover:shadow-primary/30 relative overflow-hidden group">
+                    <span class="material-symbols-rounded group-hover:scale-110 transition-transform">local_fire_department</span>
                     <span>IGNITE (BURN MORE)</span>
                 </button>
-                <button id="btn-claim" class="w-full h-12 bg-surface hover:bg-surface-light border border-primary/30 rounded-xl flex items-center justify-center gap-2 text-accent-text font-bold tracking-wider">
-                    <span class="material-symbols-outlined">download</span>
+
+                <button id="btn-claim" class="w-full h-12 glass rounded-xl flex items-center justify-center gap-3 text-text-accent font-bold tracking-wider 
+                    border border-primary/30 hover:border-primary/50 hover:bg-primary/10 
+                    transition-all duration-300 relative overflow-hidden group">
+                    <span class="material-symbols-rounded group-hover:scale-110 transition-transform">download</span>
                     <span>CLAIM REWARDS</span>
+                </button>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Burn Modal -->
+    <div id="burn-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="glass rounded-2xl p-6 w-11/12 max-w-md animate-in fade-in zoom-in duration-200">
+            <h3 class="text-xl font-bold mb-4 text-center">🔥 IGNITE TOKENS</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm text-text-accent mb-2">จำนวน MKE ที่จะ Burn</label>
+                    <input type="number" id="burn-amount" placeholder="0.0" step="0.1"
+                        class="w-full px-4 py-3 rounded-lg bg-bg-surface border border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono text-lg">
+                </div>
+                
+                <div class="flex justify-between text-sm p-3 bg-bg-surface rounded-lg">
+                    <span class="text-text-muted">ยอดคงเหลือ:</span>
+                    <span class="font-bold" id="modal-balance">-- MKE</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="modal-cancel" class="flex-1 py-3 rounded-lg border border-white/10 hover:bg-white/5 transition-all">
+                    ยกเลิก
+                </button>
+                <button id="modal-confirm" class="flex-1 py-3 rounded-lg bg-primary hover:bg-primary-glow transition-all font-bold">
+                    <span class="spinner" style="display: none;"></span>
+                    <span id="confirm-text">CONFIRM BURN</span>
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
     <script>
-        // CONFIG
-        const SEPOLIA_CHAIN_ID = '0xaa36a7';
-        const SEPOLIA_CHAIN_ID_DECIMAL = 11155111;
-        const contractAddress = "0x2D9C2f2d48297CFDeAF79b66c29212A8880Ae7bC";
-        const tokenAddress = "0x3A2E8B9F4073357597A8f80905D6a3E2197179F2";
+        // ==================== CONFIG ====================
+        const CONFIG = {
+            NETWORK: {
+                CHAIN_ID: '0xaa36a7',
+                CHAIN_ID_DECIMAL: 11155111,
+                NAME: 'Sepolia Testnet',
+                RPC: 'https://rpc.sepolia.org'
+            },
+            CONTRACTS: {
+                COMBUSTION: "0x2D9C2f2d48297CFDeAF79b66c29212A8880Ae7bC",
+                TOKEN: "0x3A2E8B9F4073357597A8f80905D6a3E2197179F2"
+            },
+            TIERS: {
+                NAMES: ['Recruit', 'Soldier', 'Captain', 'Commander', 'Legend'],
+                THRESHOLDS: [0, 1000, 5000, 10000, 20000]
+            }
+        };
 
-        const contractABI = [
-            "function upgradeTier(uint256 amount) public",
-            "function claimCredits() public",
-            "function userInfo(address user) public view returns (uint256 tier, uint256 balance, uint256 lastClaim)"
-        ];
+        // ==================== WEB3 SETUP ====================
+        class Web3Service {
+            constructor() {
+                this.provider = null;
+                this.signer = null;
+                this.contracts = {};
+                this.userAddress = null;
+                this.isConnected = false;
+            }
 
-        const tokenABI = [
-            "function balanceOf(address owner) view returns (uint256)",
-            "function decimals() view returns (uint8)",
-            "function symbol() view returns (string)"
-        ];
-
-        let provider, signer, contract, tokenContract, userAddress, isConnected = false;
-
-        // FUNCTIONS
-        async function checkAndSwitchNetwork() {
-            const network = await provider.getNetwork();
-            if (network.chainId !== SEPOLIA_CHAIN_ID_DECIMAL) {
+            async connect() {
+                if (!window.ethereum) throw new Error("MetaMask not installed");
+                
                 try {
-                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_CHAIN_ID }] });
+                    this.provider = new ethers.BrowserProvider(window.ethereum);
+                    await this.provider.send("eth_requestAccounts", []);
+                    
+                    const network = await this.provider.getNetwork();
+                    if (network.chainId !== BigInt(CONFIG.NETWORK.CHAIN_ID_DECIMAL)) {
+                        await this.switchNetwork();
+                    }
+                    
+                    this.signer = await this.provider.getSigner();
+                    this.userAddress = await this.signer.getAddress();
+                    this.isConnected = true;
+                    
+                    await this.initContracts();
                     return true;
-                } catch (err) {
-                    alert("กรุณาสลับเครือข่ายเป็น Sepolia Testnet");
-                    return false;
+                } catch (error) {
+                    console.error("Connection failed:", error);
+                    throw error;
                 }
             }
-            return true;
-        }
 
-        async function initWeb3() {
-            if (!window.ethereum) return alert("Please install MetaMask");
-            try {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
-                if (!(await checkAndSwitchNetwork())) return;
-                
-                signer = provider.getSigner();
-                userAddress = await signer.getAddress();
-                contract = new ethers.Contract(contractAddress, contractABI, signer);
-                tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
-                
-                isConnected = true;
-                updateUI();
-                updateDashboard();
-                alert("เชื่อมต่อสำเร็จ!");
-            } catch (error) { console.error(error); }
-        }
+            async switchNetwork() {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: CONFIG.NETWORK.CHAIN_ID }]
+                    });
+                } catch (error) {
+                    if (error.code === 4902) {
+                        throw new Error("Please add Sepolia network to MetaMask");
+                    }
+                    throw error;
+                }
+            }
 
-        function updateUI() {
-            const btn = document.getElementById('btn-connect-wallet');
-            if (isConnected) {
-                btn.innerHTML = `<span class='text-xs'>${userAddress.substring(0,6)}...${userAddress.substring(38)}</span>`;
-                btn.classList.replace('bg-primary', 'bg-green-600');
+            async initContracts() {
+                const combustionABI = [
+                    "function upgradeTier(uint256 amount) public",
+                    "function claimCredits() public",
+                    "function userInfo(address user) view returns (uint256 tier, uint256 balance, uint256 lastClaim)",
+                    "function getTierThresholds() view returns (uint256[] memory)",
+                    "event TierUpgraded(address indexed user, uint256 newTier)",
+                    "event TokensBurned(address indexed user, uint256 amount)"
+                ];
+
+                const tokenABI = [
+                    "function balanceOf(address owner) view returns (uint256)",
+                    "function decimals() view returns (uint8)",
+                    "function symbol() view returns (string)",
+                    "function approve(address spender, uint256 amount) public returns (bool)",
+                    "function allowance(address owner, address spender) view returns (uint256)"
+                ];
+
+                this.contracts.combustion = new ethers.Contract(
+                    CONFIG.CONTRACTS.COMBUSTION,
+                    combustionABI,
+                    this.signer
+                );
+
+                this.contracts.token = new ethers.Contract(
+                    CONFIG.CONTRACTS.TOKEN,
+                    tokenABI,
+                    this.signer
+                );
+            }
+
+            async getUserInfo() {
+                if (!this.isConnected) return null;
+                try {
+                    const info = await this.contracts.combustion.userInfo(this.userAddress);
+                    return {
+                        tier: Number(info[0]),
+                        balance: ethers.formatEther(info[1]),
+                        lastClaim: Number(info[2])
+                    };
+                } catch (error) {
+                    console.error("Get user info failed:", error);
+                    return null;
+                }
+            }
+
+            async getTokenBalance() {
+                if (!this.isConnected) return "0";
+                try {
+                    const balance = await this.contracts.token.balanceOf(this.userAddress);
+                    return ethers.formatEther(balance);
+                } catch (error) {
+                    console.error("Get token balance failed:", error);
+                    return "0";
+                }
+            }
+
+            async burnTokens(amount) {
+                if (!this.isConnected) throw new Error("Not connected");
+                
+                const amountWei = ethers.parseEther(amount.toString());
+                const allowance = await this.contracts.token.allowance(this.userAddress, CONFIG.CONTRACTS.COMBUSTION);
+                
+                if (allowance < amountWei) {
+                    const approveTx = await this.contracts.token.approve(CONFIG.CONTRACTS.COMBUSTION, amountWei);
+                    await approveTx.wait();
+                }
+
+                const tx = await this.contracts.combustion.upgradeTier(amountWei);
+                return await tx.wait();
+            }
+
+            async claimRewards() {
+                if (!this.isConnected) throw new Error("Not connected");
+                const tx = await this.contracts.combustion.claimCredits();
+                return await tx.wait();
+            }
+
+            listenToEvents(onTierUpgraded, onTokensBurned) {
+                if (!this.contracts.combustion) return;
+                
+                this.contracts.combustion.on("TierUpgraded", (user, newTier) => {
+                    if (user.toLowerCase() === this.userAddress?.toLowerCase()) {
+                        onTierUpgraded(newTier);
+                    }
+                });
+
+                this.contracts.combustion.on("TokensBurned", (user, amount) => {
+                    if (user.toLowerCase() === this.userAddress?.toLowerCase()) {
+                        onTokensBurned(ethers.formatEther(amount));
+                    }
+                });
             }
         }
 
-        async function updateDashboard() {
-            if (!isConnected) return;
-            const info = await contract.userInfo(userAddress);
-            const balance = ethers.utils.formatEther(info.balance);
-            const tier = info.tier.toNumber();
-            
-            document.getElementById('display-burned').innerText = `${parseFloat(balance).toFixed(2)} MKE`;
-            document.getElementById('display-tier').innerText = tier === 0 ? "Recruit" : "Tier " + tier;
-            
-            updateProgressBar(tier, parseFloat(balance));
-            
-            const tokenBal = await tokenContract.balanceOf(userAddress);
-            document.getElementById('display-wallet-balance').innerText = `${parseFloat(ethers.utils.formatEther(tokenBal)).toFixed(2)} MKE`;
+        // ==================== UI CONTROLLER ====================
+        class UIController {
+            constructor() {
+                this.web3 = new Web3Service();
+                this.isLoading = false;
+                this.initElements();
+                this.attachEventListeners();
+                this.autoConnect();
+            }
+
+            initElements() {
+                // Buttons
+                this.connectBtn = document.getElementById('btn-connect-wallet');
+                this.igniteBtn = document.getElementById('btn-ignite');
+                this.claimBtn = document.getElementById('btn-claim');
+                this.backBtn = document.getElementById('btn-back');
+                
+                // Display elements
+                this.walletText = document.getElementById('wallet-text');
+                this.tierName = document.getElementById('display-tier');
+                this.tierNumber = document.getElementById('display-tier-number');
+                this.progressBar = document.getElementById('progress-bar');
+                this.progressText = document.getElementById('progress-text');
+                this.progressPercent = document.getElementById('progress-percent');
+                this.walletBalance = document.getElementById('display-wallet-balance');
+                this.burnedAmount = document.getElementById('display-burned');
+                
+                // Modal elements
+                this.burnModal = document.getElementById('burn-modal');
+                this.burnAmountInput = document.getElementById('burn-amount');
+                this.modalBalance = document.getElementById('modal-balance');
+                this.modalCancel = document.getElementById('modal-cancel');
+                this.modalConfirm = document.getElementById('modal-confirm');
+                this.modalSpinner = this.burnModal?.querySelector('.spinner');
+                this.confirmText = document.getElementById('confirm-text');
+                
+                // Toast container
+                this.toastContainer = document.getElementById('toast-container');
+            }
+
+            attachEventListeners() {
+                this.connectBtn?.addEventListener('click', () => this.handleConnect());
+                this.igniteBtn?.addEventListener('click', () => this.openBurnModal());
+                this.claimBtn?.addEventListener('click', () => this.handleClaim());
+                this.backBtn?.addEventListener('click', () => window.history.back());
+                
+                // Modal events
+                this.modalCancel?.addEventListener('click', () => this.closeBurnModal());
+                this.modalConfirm?.addEventListener('click', () => this.handleBurn());
+                this.burnAmountInput?.addEventListener('input', (e) => this.validateAmount(e.target.value));
+                
+                // Close modal on outside click
+                this.burnModal?.addEventListener('click', (e) => {
+                    if (e.target === this.burnModal) this.closeBurnModal();
+                });
+
+                // Listen to blockchain events
+                this.web3.listenToEvents(
+                    (newTier) => this.handleTierUpgrade(newTier),
+                    (amount) => this.showToast(`🔥 Burned ${parseFloat(amount).toFixed(2)} MKE!`, 'success')
+                );
+            }
+
+            async autoConnect() {
+                if (window.ethereum) {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        await this.handleConnect();
+                    }
+                }
+            }
+
+            async handleConnect() {
+                try {
+                    this.setLoading(this.connectBtn, true);
+                    await this.web3.connect();
+                    this.updateConnectionUI();
+                    await this.refreshData();
+                    this.showToast('✅ Connected successfully!', 'success');
+                } catch (error) {
+                    this.showToast(`❌ ${error.message}`, 'error');
+                } finally {
+                    this.setLoading(this.connectBtn, false);
+                }
+            }
+
+            updateConnectionUI() {
+                if (this.web3.isConnected) {
+                    const addr = this.web3.userAddress;
+                    this.walletText.textContent = `${addr.substring(0, 6)}...${addr.substring(38)}`;
+                    this.connectBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    this.connectBtn.classList.remove('bg-primary');
+                }
+            }
+
+            async refreshData() {
+                if (!this.web3.isConnected) return;
+                
+                const [userInfo, tokenBalance] = await Promise.all([
+                    this.web3.getUserInfo(),
+                    this.web3.getTokenBalance()
+                ]);
+
+                if (userInfo) {
+                    this.updateTierDisplay(userInfo.tier, parseFloat(userInfo.balance));
+                    this.burnedAmount.textContent = `${parseFloat(userInfo.balance).toFixed(2)} MKE`;
+                }
+
+                this.walletBalance.textContent = `${parseFloat(tokenBalance).toFixed(2)} MKE`;
+            }
+
+            updateTierDisplay(tier, burned) {
+                const tierName = CONFIG.TIERS.NAMES[tier] || `Tier ${tier}`;
+                this.tierName.textContent = tierName;
+                this.tierNumber.textContent = `Tier ${tier}`;
+                
+                // Update progress bar
+                const nextTier = tier + 1;
+                if (nextTier >= CONFIG.TIERS.THRESHOLDS.length) {
+                    // Max tier reached
+                    this.progressBar.style.width = '100%';
+                    this.progressText.textContent = 'MAX TIER REACHED';
+                    this.progressPercent.textContent = '100%';
+                    this.igniteBtn.disabled = true;
+                    this.igniteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    return;
+                }
+
+                const nextThreshold = CONFIG.TIERS.THRESHOLDS[nextTier];
+                const prevThreshold = CONFIG.TIERS.THRESHOLDS[tier];
+                const progress = burned - prevThreshold;
+                const required = nextThreshold - prevThreshold;
+                const percentage = Math.min(100, (progress / required) * 100);
+
+                this.progressBar.style.width = `${percentage}%`;
+                this.progressText.textContent = `${burned.toFixed(0)} / ${nextThreshold} MKE`;
+                this.progressPercent.textContent = `${Math.floor(percentage)}%`;
+            }
+
+            openBurnModal() {
+                if (!this.web3.isConnected) {
+                    this.showToast('❌ Please connect wallet first', 'error');
+                    return;
+                }
+                
+                // Update balance in modal
+                const balance = this.walletBalance.textContent;
+                this.modalBalance.textContent = balance;
+                this.burnAmountInput.value = '';
+                this.burnModal.classList.remove('hidden');
+                this.burnModal.classList.add('flex');
+                setTimeout(() => this.burnAmountInput?.focus(), 100);
+            }
+
+            closeBurnModal() {
+                this.burnModal.classList.add('hidden');
+                this.burnModal.classList.remove('flex');
+                this.burnAmountInput.value = '';
+                this.setLoading(this.modalConfirm, false);
+                this.modalConfirm.disabled = false;
+            }
+
+            validateAmount(value) {
+                const balance = parseFloat(this.walletBalance.textContent);
+                const amount = parseFloat(value);
+                
+                if (amount > balance) {
+                    this.burnAmountInput.classList.add('border-red-500');
+                    this.modalConfirm.disabled = true;
+                } else {
+                    this.burnAmountInput.classList.remove('border-red-500');
+                    this.modalConfirm.disabled = false;
+                }
+            }
+
+            async handleBurn() {
+                const amount = this.burnAmountInput.value;
+                if (!amount || amount <= 0) {
+                    this.showToast('❌ Please enter valid amount', 'error');
+                    return;
+                }
+
+                try {
+                    this.setLoading(this.modalConfirm, true);
+                    this.modalConfirm.disabled = true;
+                    
+                    await this.web3.burnTokens(amount);
+                    this.closeBurnModal();
+                    await this.refreshData();
+                    this.showToast(`✅ Burned ${amount} MKE successfully!`, 'success');
+                } catch (error) {
+                    if (error.code === 'ACTION_REJECTED') {
+                        this.showToast('❌ Transaction rejected', 'error');
+                    } else {
+                        this.showToast(`❌ Burn failed: ${error.message.substring(0, 50)}...`, 'error');
+                    }
+                } finally {
+                    this.setLoading(this.modalConfirm, false);
+                }
+            }
+
+            async handleClaim() {
+                if (!this.web3.isConnected) {
+                    this.showToast('❌ Please connect wallet first', 'error');
+                    return;
+                }
+
+                try {
+                    this.setLoading(this.claimBtn, true);
+                    await this.web3.claimRewards();
+                    await this.refreshData();
+                    this.showToast('✅ Rewards claimed successfully!', 'success');
+                } catch (error) {
+                    if (error.code === 'ACTION_REJECTED') {
+                        this.showToast('❌ Claim rejected', 'error');
+                    } else {
+                        this.showToast(`❌ Claim failed: ${error.message.substring(0, 50)}...`, 'error');
+                    }
+                } finally {
+                    this.setLoading(this.claimBtn, false);
+                }
+            }
+
+            handleTierUpgrade(newTier) {
+                this.refreshData();
+                this.showToast(`🎉 Tier upgraded to ${CONFIG.TIERS.NAMES[newTier]}!`, 'success');
+            }
+
+            setLoading(button, isLoading) {
+                const spinner = button.querySelector('.spinner');
+                const text = button.querySelector('span:not(.spinner)') || button.querySelector('span');
+                
+                if (isLoading) {
+                    spinner?.classList.remove('hidden');
+                    if (text && button !== this.connectBtn) text.style.display = 'none';
+                } else {
+                    spinner?.classList.add('hidden');
+                    if (text && button !== this.connectBtn) text.style.display = 'inline';
+                }
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                const bgColor = type === 'success' ? 'bg-green-600' : 
+                               type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+                
+                toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-2 opacity-0`;
+                toast.textContent = message;
+                
+                this.toastContainer.appendChild(toast);
+                
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                }, 100);
+                
+                // Auto remove
+                setTimeout(() => {
+                    toast.classList.add('translate-y-2', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 5000);
+            }
         }
 
-        function updateProgressBar(tier, burned) {
-            const thresholds = [0, 1000, 5000, 10000, 20000];
-            const nextTier = tier + 1;
-            if (nextTier >= thresholds.length) return;
-
-            const nextThreshold = thresholds[nextTier];
-            const prevThreshold = thresholds[tier];
-            const percentage = Math.min(100, ((burned - prevThreshold) / (nextThreshold - prevThreshold)) * 100);
-
-            document.getElementById('progress-bar').style.width = percentage + "%";
-            document.getElementById('progress-text').innerText = `${burned.toFixed(0)} / ${nextThreshold} MKE`;
-            document.getElementById('progress-percent').innerText = Math.floor(percentage) + "%";
-        }
-
-        async function handleIgnite() {
-            if (!isConnected) return alert("Connect Wallet First");
-            const amount = prompt("จำนวน MKE ที่จะ Burn:", "1000");
-            if (!amount) return;
-            try {
-                const tx = await contract.upgradeTier(ethers.utils.parseEther(amount));
-                await tx.wait();
-                alert("Burn Success!");
-                updateDashboard();
-            } catch (e) { alert("Error: " + e.message); }
-        }
-
-        async function handleClaim() {
-            if (!isConnected) return;
-            try {
-                const tx = await contract.claimCredits();
-                await tx.wait();
-                alert("Claim Success!");
-                updateDashboard();
-            } catch (e) { alert("Error: " + e.message); }
-        }
-
-        // STARTUP
+        // ==================== INITIALIZE ====================
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('btn-connect-wallet').onclick = initWeb3;
-            document.getElementById('btn-ignite').onclick = handleIgnite;
-            document.getElementById('btn-claim').onclick = handleClaim;
+            new UIController();
         });
     </script>
 </body>
