@@ -227,7 +227,8 @@
         const tokenABI = [
             "function balanceOf(address owner) view returns (uint256)",
             "function decimals() view returns (uint8)",
-            "function symbol() view returns (string)"
+            "function symbol() view returns (string)",
+            "function name() view returns (string)"
         ];
 
         // Global Variables
@@ -241,38 +242,85 @@
         // Initialize Web3
         async function initWeb3() {
             if (typeof window.ethereum === 'undefined') {
-                alert("กรุณาติดตั้ง MetaMask Extension ก่อนใช้งาน");
+                alert("❌ กรุณาติดตั้ง MetaMask Extension ก่อนใช้งาน\n\nดาวน์โหลดได้ที่: https://metamask.io");
                 return false;
             }
 
             try {
+                console.log("🔄 Initializing Web3...");
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 
                 // Request account access
-                await provider.send("eth_requestAccounts", []);
+                const accounts = await provider.send("eth_requestAccounts", []);
+                console.log("✅ Accounts received:", accounts);
+                
+                if (!accounts || accounts.length === 0) {
+                    alert("❌ ไม่พบ Account ใน MetaMask\n\nกรุณาสร้างหรือ Import Account ก่อน");
+                    return false;
+                }
                 
                 signer = provider.getSigner();
                 userAddress = await signer.getAddress();
+                console.log("✅ User Address:", userAddress);
                 
-                // Initialize contracts
-                contract = new ethers.Contract(contractAddress, contractABI, signer);
-                tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
+                // Get network info
+                const network = await provider.getNetwork();
+                console.log("✅ Network:", network.name, "Chain ID:", network.chainId);
+                
+                // Initialize main contract
+                try {
+                    contract = new ethers.Contract(contractAddress, contractABI, signer);
+                    console.log("✅ Main contract initialized:", contractAddress);
+                } catch (contractError) {
+                    console.error("❌ Failed to initialize main contract:", contractError);
+                    alert("⚠️ ไม่สามารถเชื่อมต่อกับ Contract หลักได้\n\nContract: " + contractAddress);
+                }
+                
+                // Initialize token contract if available
+                if (tokenAddress && tokenAddress !== "0x0000000000000000000000000000000000000000") {
+                    try {
+                        tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
+                        console.log("✅ Token contract initialized:", tokenAddress);
+                        
+                        // Test token contract
+                        const symbol = await tokenContract.symbol();
+                        console.log("✅ Token Symbol:", symbol);
+                    } catch (tokenError) {
+                        console.warn("⚠️ Token contract initialization failed:", tokenError.message);
+                        tokenContract = null;
+                    }
+                } else {
+                    console.warn("⚠️ Token address not set");
+                }
                 
                 // Update connection status
                 isConnected = true;
                 updateWalletUI();
                 
                 console.log("✅ Connected to MKE Protocol");
-                console.log("Address:", userAddress);
                 
                 // Update all dashboard data
-                await updateDashboard();
-                await updateWalletBalance();
+                await Promise.all([
+                    updateDashboard(),
+                    updateWalletBalance()
+                ]);
                 
                 return true;
             } catch (error) {
-                console.error("Connection failed:", error);
-                alert("การเชื่อมต่อล้มเหลว: " + error.message);
+                console.error("❌ Connection failed:", error);
+                isConnected = false;
+                
+                let errorMessage = "การเชื่อมต่อล้มเหลว\n\n";
+                
+                if (error.code === 4001) {
+                    errorMessage += "คุณปฏิเสธการเชื่อมต่อ\nกรุณาอนุญาตการเชื่อมต่อใน MetaMask";
+                } else if (error.code === -32002) {
+                    errorMessage += "กรุณาตรวจสอบ MetaMask\nมีคำขออนุญาตรออยู่";
+                } else {
+                    errorMessage += "Error: " + (error.message || "Unknown error");
+                }
+                
+                alert("❌ " + errorMessage);
                 return false;
             }
         }
@@ -301,25 +349,56 @@
 
         // Update Wallet Balance
         async function updateWalletBalance() {
-            if (!isConnected || !tokenContract) {
+            if (!isConnected || !signer) {
                 document.getElementById('display-wallet-balance').innerHTML = 
-                    `-- <span class="text-sm font-normal text-white/50">MKE</span>`;
+                    `<span class="text-white/40">--</span> <span class="text-sm font-normal text-white/50">MKE</span>`;
                 return;
             }
 
             try {
-                const balance = await tokenContract.balanceOf(userAddress);
-                const decimals = await tokenContract.decimals();
-                const formatted = ethers.utils.formatUnits(balance, decimals);
+                console.log("💰 Fetching wallet balance...");
+                
+                // Method 1: Try using token contract
+                if (tokenContract) {
+                    try {
+                        console.log("Attempting to read token balance from:", tokenAddress);
+                        
+                        const [balance, decimals, symbol] = await Promise.all([
+                            tokenContract.balanceOf(userAddress),
+                            tokenContract.decimals(),
+                            tokenContract.symbol()
+                        ]);
+                        
+                        console.log("Raw balance:", balance.toString());
+                        console.log("Decimals:", decimals);
+                        console.log("Symbol:", symbol);
+                        
+                        const formatted = ethers.utils.formatUnits(balance, decimals);
+                        
+                        document.getElementById('display-wallet-balance').innerHTML = 
+                            `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 2})} <span class="text-sm font-normal text-white/50">${symbol}</span>`;
+                        
+                        console.log("✅ Wallet Balance:", formatted, symbol);
+                        return;
+                    } catch (tokenError) {
+                        console.error("Token contract error:", tokenError.message);
+                        console.error("Full error:", tokenError);
+                    }
+                }
+                
+                // Method 2: Fallback to native balance
+                console.log("Fetching native balance...");
+                const balance = await provider.getBalance(userAddress);
+                const formatted = ethers.utils.formatEther(balance);
                 
                 document.getElementById('display-wallet-balance').innerHTML = 
-                    `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 2})} <span class="text-sm font-normal text-white/50">MKE</span>`;
+                    `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 4})} <span class="text-sm font-normal text-white/50">Native</span>`;
                 
-                console.log("💰 Wallet Balance:", formatted, "MKE");
+                console.log("✅ Native Balance:", formatted);
             } catch (error) {
-                console.error("Failed to fetch wallet balance:", error);
+                console.error("❌ Failed to fetch balance:", error);
                 document.getElementById('display-wallet-balance').innerHTML = 
-                    `0 <span class="text-sm font-normal text-white/50">MKE</span>`;
+                    `<span class="text-red-400">Error</span> <span class="text-sm font-normal text-white/50">MKE</span>`;
             }
         }
 
@@ -327,15 +406,35 @@
         async function updateDashboard() {
             if (!contract || !signer || !isConnected) {
                 console.warn("Contract not initialized or wallet not connected");
+                // Show default values when not connected
+                document.getElementById('display-tier').textContent = 'Recruit';
+                document.getElementById('display-tier-number').textContent = 'Tier 0';
+                document.getElementById('display-burned').innerHTML = '0 <span class="text-sm font-normal text-white/50">MKE</span>';
+                document.getElementById('display-pending').innerHTML = '0 <span class="text-sm font-normal text-white/50">MKE</span>';
+                document.getElementById('display-boost').innerHTML = '1.0x <span class="text-sm font-normal text-white/50">APR</span>';
+                document.getElementById('display-earned').innerHTML = '0 <span class="text-sm font-normal text-white/50">MKE</span>';
                 return;
             }
 
             try {
+                console.log("📊 Fetching user info from contract...");
                 const info = await contract.userInfo(userAddress);
+                
+                console.log("Raw contract data:", {
+                    tier: info.tier.toString(),
+                    balance: info.balance.toString(),
+                    lastClaim: info.lastClaim.toString()
+                });
                 
                 const tier = info.tier.toNumber();
                 const balance = ethers.utils.formatEther(info.balance);
                 const lastClaim = info.lastClaim.toNumber();
+                
+                console.log("Parsed data:", {
+                    tier,
+                    balance,
+                    lastClaim
+                });
                 
                 // Update Tier Display
                 updateTierDisplay(tier);
@@ -352,12 +451,23 @@
                 document.getElementById('display-pending').innerHTML = 
                     `${pending.toFixed(2)} <span class="text-sm font-normal text-white/50">MKE</span>`;
                 
+                // Mock earned value (you can replace this with actual contract data)
+                const earned = pending * 0.8; // Example calculation
+                document.getElementById('display-earned').innerHTML = 
+                    `${earned.toFixed(2)} <span class="text-sm font-normal text-white/50">MKE</span>`;
+                
                 // Update Progress Bar
                 updateProgressBar(tier, parseFloat(balance));
                 
-                console.log("✅ Dashboard updated");
+                console.log("✅ Dashboard updated successfully");
             } catch (error) {
                 console.error("Failed to update dashboard:", error);
+                console.error("Error details:", {
+                    message: error.message,
+                    code: error.code,
+                    data: error.data
+                });
+                alert("⚠️ ไม่สามารถโหลดข้อมูลจาก Contract ได้\n\nกรุณาตรวจสอบ:\n- Network ที่เชื่อมต่อถูกต้อง\n- Contract Address ถูกต้อง\n- คุณมีสิทธิ์เข้าถึง Contract");
             }
         }
 
@@ -426,56 +536,142 @@
         // Handle Ignite (Burn)
         async function handleIgnite() {
             if (!isConnected) {
-                alert("กรุณาเชื่อมต่อ Wallet ก่อน");
+                alert("❌ กรุณาเชื่อมต่อ Wallet ก่อน");
+                return;
+            }
+            
+            if (!contract) {
+                alert("❌ Contract ยังไม่พร้อมใช้งาน\nกรุณาลองเชื่อมต่อใหม่");
                 return;
             }
 
-            const amountInput = prompt("จำนวน MKE ที่ต้องการ Burn:", "1000");
-            if (!amountInput) return;
+            const amountInput = prompt("💰 จำนวน MKE ที่ต้องการ Burn:", "1000");
+            if (!amountInput || amountInput.trim() === "") return;
+            
+            const amount = parseFloat(amountInput);
+            if (isNaN(amount) || amount <= 0) {
+                alert("❌ กรุณาใส่จำนวนที่ถูกต้อง");
+                return;
+            }
 
             try {
-                const amount = ethers.utils.parseEther(amountInput);
+                const amountWei = ethers.utils.parseEther(amountInput);
                 
                 console.log("🔥 Initiating burn transaction...");
-                const tx = await contract.upgradeTier(amount);
+                console.log("Amount:", amountInput, "MKE");
+                console.log("Amount (Wei):", amountWei.toString());
                 
-                alert(`🔥 กำลังดำเนินการ Burn ${amountInput} MKE\n\nTransaction Hash: ${tx.hash}\n\nโปรดรอการยืนยันธุรกรรม...`);
+                // Estimate gas first
+                try {
+                    const gasEstimate = await contract.estimateGas.upgradeTier(amountWei);
+                    console.log("⛽ Estimated gas:", gasEstimate.toString());
+                } catch (gasError) {
+                    console.error("Gas estimation failed:", gasError);
+                    if (gasError.message.includes("insufficient funds")) {
+                        alert("❌ ยอดเงินไม่พอสำหรับค่า Gas Fee");
+                        return;
+                    }
+                }
                 
-                await tx.wait();
+                const tx = await contract.upgradeTier(amountWei);
                 
-                alert("✅ Burn สำเร็จ! ระดับ Tier ของคุณได้รับการอัปเกรดแล้ว");
+                alert(`🔥 กำลังดำเนินการ Burn ${amountInput} MKE\n\n✅ Transaction Hash:\n${tx.hash}\n\n⏳ โปรดรอการยืนยันธุรกรรม...`);
                 
-                await updateDashboard();
-                await updateWalletBalance();
+                console.log("📝 Transaction sent:", tx.hash);
+                
+                const receipt = await tx.wait();
+                console.log("✅ Transaction confirmed:", receipt);
+                
+                alert(`✅ Burn สำเร็จ!\n\n🔥 เบิร์น: ${amountInput} MKE\n🎯 Block: ${receipt.blockNumber}\n⛽ Gas Used: ${receipt.gasUsed.toString()}\n\n🚀 ระดับ Tier ของคุณได้รับการอัปเกรดแล้ว!`);
+                
+                await Promise.all([
+                    updateDashboard(),
+                    updateWalletBalance()
+                ]);
             } catch (error) {
-                console.error("Burn failed:", error);
-                const errorMsg = error.data?.message || error.message;
-                alert("❌ การ Burn ล้มเหลว: " + errorMsg);
+                console.error("❌ Burn failed:", error);
+                
+                let errorMsg = "การ Burn ล้มเหลว\n\n";
+                
+                if (error.code === 4001) {
+                    errorMsg += "คุณปฏิเสธธุรกรรม";
+                } else if (error.message.includes("insufficient funds")) {
+                    errorMsg += "ยอดเงินไม่เพียงพอ (รวมค่า Gas)";
+                } else if (error.error?.message) {
+                    errorMsg += error.error.message;
+                } else if (error.data?.message) {
+                    errorMsg += error.data.message;
+                } else {
+                    errorMsg += error.message || "Unknown error";
+                }
+                
+                alert("❌ " + errorMsg);
             }
         }
 
         // Handle Claim
         async function handleClaim() {
             if (!isConnected) {
-                alert("กรุณาเชื่อมต่อ Wallet ก่อน");
+                alert("❌ กรุณาเชื่อมต่อ Wallet ก่อน");
+                return;
+            }
+            
+            if (!contract) {
+                alert("❌ Contract ยังไม่พร้อมใช้งาน\nกรุณาลองเชื่อมต่อใหม่");
                 return;
             }
 
             try {
                 console.log("💎 Claiming rewards...");
+                
+                // Estimate gas first
+                try {
+                    const gasEstimate = await contract.estimateGas.claimCredits();
+                    console.log("⛽ Estimated gas:", gasEstimate.toString());
+                } catch (gasError) {
+                    console.error("Gas estimation failed:", gasError);
+                    if (gasError.message.includes("insufficient funds")) {
+                        alert("❌ ยอดเงินไม่พอสำหรับค่า Gas Fee");
+                        return;
+                    } else if (gasError.message.includes("No rewards")) {
+                        alert("⚠️ ยังไม่มีรางวัลให้รับในขณะนี้");
+                        return;
+                    }
+                }
+                
                 const tx = await contract.claimCredits();
                 
-                alert("💎 กำลังรับรางวัล...\n\nโปรดรอการยืนยันธุรกรรม");
+                alert(`💎 กำลังรับรางวัล...\n\n✅ Transaction Hash:\n${tx.hash}\n\n⏳ โปรดรอการยืนยันธุรกรรม`);
                 
-                await tx.wait();
+                console.log("📝 Transaction sent:", tx.hash);
                 
-                alert("✅ รับรางวัลสำเร็จแล้ว!");
+                const receipt = await tx.wait();
+                console.log("✅ Transaction confirmed:", receipt);
                 
-                await updateDashboard();
-                await updateWalletBalance();
+                alert(`✅ รับรางวัลสำเร็จแล้ว!\n\n🎯 Block: ${receipt.blockNumber}\n⛽ Gas Used: ${receipt.gasUsed.toString()}`);
+                
+                await Promise.all([
+                    updateDashboard(),
+                    updateWalletBalance()
+                ]);
             } catch (error) {
-                console.error("Claim failed:", error);
-                alert("❌ การรับรางวัลล้มเหลว: " + error.message);
+                console.error("❌ Claim failed:", error);
+                
+                let errorMsg = "การรับรางวัลล้มเหลว\n\n";
+                
+                if (error.code === 4001) {
+                    errorMsg += "คุณปฏิเสธธุรกรรม";
+                } else if (error.message.includes("insufficient funds")) {
+                    errorMsg += "ยอดเงินไม่เพียงพอสำหรับค่า Gas";
+                } else if (error.error?.message) {
+                    errorMsg += error.error.message;
+                } else if (error.data?.message) {
+                    errorMsg += error.data.message;
+                } else {
+                    errorMsg += error.message || "Unknown error";
+                }
+                
+                alert("❌ " + errorMsg);
             }
         }
 
@@ -504,4 +700,3 @@
     </script>
 </body>
 </html>
-
