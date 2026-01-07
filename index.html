@@ -83,10 +83,10 @@
                 <span class="material-symbols-outlined text-white">arrow_back</span>
             </button>
             <h1 class="text-lg font-bold tracking-tight uppercase">MKE Combustion</h1>
-            <div class="flex items-center gap-2 bg-surface-light px-3 py-1.5 rounded-full border border-white/5">
-                <span class="material-symbols-outlined text-primary text-[18px]">account_balance_wallet</span>
-                <span class="text-xs font-bold tracking-wider text-accent-text" id="wallet-address">เชื่อมต่อ</span>
-            </div>
+            <button id="btn-connect-wallet" class="flex items-center gap-2 bg-primary hover:bg-primary-glow px-4 py-2 rounded-full border border-primary/30 transition-all shadow-[0_0_15px_rgba(173,43,238,0.3)]">
+                <span class="material-symbols-outlined text-white text-[18px]">account_balance_wallet</span>
+                <span class="text-xs font-bold tracking-wider text-white">CONNECT</span>
+            </button>
         </div>
 
         <div class="relative z-10 flex flex-col gap-6 p-4">
@@ -129,6 +129,15 @@
 
             <!-- Stats Grid -->
             <div class="grid grid-cols-2 gap-3">
+                <!-- Wallet Balance -->
+                <div class="bg-gradient-to-br from-primary/20 to-primary/5 p-4 rounded-xl border border-primary/40 flex flex-col gap-2 hover:border-primary/60 transition-colors">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="material-symbols-outlined text-[20px]">wallet</span>
+                        <span class="text-xs font-bold uppercase tracking-wider">Wallet Balance</span>
+                    </div>
+                    <p class="text-xl font-bold text-white tracking-tight" id="display-wallet-balance">0 <span class="text-sm font-normal text-white/50">MKE</span></p>
+                </div>
+                
                 <!-- Total Burned -->
                 <div class="bg-surface-light p-4 rounded-xl border border-white/5 flex flex-col gap-2 hover:border-primary/40 transition-colors">
                     <div class="flex items-center gap-2 text-accent-text">
@@ -207,17 +216,27 @@
     <script>
         // Smart Contract Configuration
         const contractAddress = "0x2D9C2f2d48297CFDeAF79b66c29212A8880Ae7bC";
+        const tokenAddress = "0x3A2E8B9F4073357597A8f80905D6a3E2197179F2"; // MKE Token Contract Address
+        
         const contractABI = [
             "function upgradeTier(uint256 amount) public",
             "function claimCredits() public",
             "function userInfo(address user) public view returns (uint256 tier, uint256 balance, uint256 lastClaim)"
+        ];
+        
+        const tokenABI = [
+            "function balanceOf(address owner) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function symbol() view returns (string)"
         ];
 
         // Global Variables
         let provider;
         let signer;
         let contract;
+        let tokenContract;
         let userAddress;
+        let isConnected = false;
 
         // Initialize Web3
         async function initWeb3() {
@@ -235,18 +254,20 @@
                 signer = provider.getSigner();
                 userAddress = await signer.getAddress();
                 
-                // Initialize contract
+                // Initialize contracts
                 contract = new ethers.Contract(contractAddress, contractABI, signer);
+                tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
                 
-                // Update UI with wallet address
-                const shortAddress = `${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
-                document.getElementById('wallet-address').textContent = shortAddress;
+                // Update connection status
+                isConnected = true;
+                updateWalletUI();
                 
                 console.log("✅ Connected to MKE Protocol");
                 console.log("Address:", userAddress);
                 
-                // Update dashboard data
+                // Update all dashboard data
                 await updateDashboard();
+                await updateWalletBalance();
                 
                 return true;
             } catch (error) {
@@ -256,10 +277,56 @@
             }
         }
 
+        // Update Wallet UI
+        function updateWalletUI() {
+            const connectBtn = document.getElementById('btn-connect-wallet');
+            
+            if (isConnected && userAddress) {
+                const shortAddress = `${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
+                connectBtn.innerHTML = `
+                    <span class="material-symbols-outlined text-white text-[18px]">check_circle</span>
+                    <span class="text-xs font-bold tracking-wider text-white">${shortAddress}</span>
+                `;
+                connectBtn.classList.remove('hover:bg-primary-glow');
+                connectBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                connectBtn.innerHTML = `
+                    <span class="material-symbols-outlined text-white text-[18px]">account_balance_wallet</span>
+                    <span class="text-xs font-bold tracking-wider text-white">CONNECT</span>
+                `;
+                connectBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                connectBtn.classList.add('hover:bg-primary-glow');
+            }
+        }
+
+        // Update Wallet Balance
+        async function updateWalletBalance() {
+            if (!isConnected || !tokenContract) {
+                document.getElementById('display-wallet-balance').innerHTML = 
+                    `-- <span class="text-sm font-normal text-white/50">MKE</span>`;
+                return;
+            }
+
+            try {
+                const balance = await tokenContract.balanceOf(userAddress);
+                const decimals = await tokenContract.decimals();
+                const formatted = ethers.utils.formatUnits(balance, decimals);
+                
+                document.getElementById('display-wallet-balance').innerHTML = 
+                    `${parseFloat(formatted).toLocaleString('en-US', {maximumFractionDigits: 2})} <span class="text-sm font-normal text-white/50">MKE</span>`;
+                
+                console.log("💰 Wallet Balance:", formatted, "MKE");
+            } catch (error) {
+                console.error("Failed to fetch wallet balance:", error);
+                document.getElementById('display-wallet-balance').innerHTML = 
+                    `0 <span class="text-sm font-normal text-white/50">MKE</span>`;
+            }
+        }
+
         // Update Dashboard
         async function updateDashboard() {
-            if (!contract || !signer) {
-                console.warn("Contract not initialized");
+            if (!contract || !signer || !isConnected) {
+                console.warn("Contract not initialized or wallet not connected");
                 return;
             }
 
@@ -275,7 +342,7 @@
                 
                 // Update Burned Amount
                 document.getElementById('display-burned').innerHTML = 
-                    `${parseFloat(balance).toFixed(2)} <span class="text-sm font-normal text-white/50">MKE</span>`;
+                    `${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})} <span class="text-sm font-normal text-white/50">MKE</span>`;
                 
                 // Calculate Pending Rewards (10 MKE per hour)
                 const currentTime = Math.floor(Date.now() / 1000);
@@ -346,11 +413,21 @@
             document.getElementById('progress-percent').textContent = `${percentage.toFixed(0)}%`;
         }
 
+        // Handle Connect Wallet
+        async function handleConnectWallet() {
+            if (isConnected) {
+                alert(`คุณเชื่อมต่ออยู่แล้ว\n\nที่อยู่: ${userAddress}`);
+                return;
+            }
+            
+            await initWeb3();
+        }
+
         // Handle Ignite (Burn)
         async function handleIgnite() {
-            if (!contract) {
-                const connected = await initWeb3();
-                if (!connected) return;
+            if (!isConnected) {
+                alert("กรุณาเชื่อมต่อ Wallet ก่อน");
+                return;
             }
 
             const amountInput = prompt("จำนวน MKE ที่ต้องการ Burn:", "1000");
@@ -369,6 +446,7 @@
                 alert("✅ Burn สำเร็จ! ระดับ Tier ของคุณได้รับการอัปเกรดแล้ว");
                 
                 await updateDashboard();
+                await updateWalletBalance();
             } catch (error) {
                 console.error("Burn failed:", error);
                 const errorMsg = error.data?.message || error.message;
@@ -378,9 +456,9 @@
 
         // Handle Claim
         async function handleClaim() {
-            if (!contract) {
-                const connected = await initWeb3();
-                if (!connected) return;
+            if (!isConnected) {
+                alert("กรุณาเชื่อมต่อ Wallet ก่อน");
+                return;
             }
 
             try {
@@ -394,6 +472,7 @@
                 alert("✅ รับรางวัลสำเร็จแล้ว!");
                 
                 await updateDashboard();
+                await updateWalletBalance();
             } catch (error) {
                 console.error("Claim failed:", error);
                 alert("❌ การรับรางวัลล้มเหลว: " + error.message);
@@ -401,25 +480,20 @@
         }
 
         // Event Listeners
+        document.getElementById('btn-connect-wallet').addEventListener('click', handleConnectWallet);
         document.getElementById('btn-ignite').addEventListener('click', handleIgnite);
         document.getElementById('btn-claim').addEventListener('click', handleClaim);
-
-        // Auto-connect wallet on page load
-        window.addEventListener('load', () => {
-            // Wait for MetaMask to be ready
-            setTimeout(() => {
-                if (typeof window.ethereum !== 'undefined') {
-                    initWeb3();
-                }
-            }, 1000);
-        });
 
         // Listen for account changes
         if (typeof window.ethereum !== 'undefined') {
             window.ethereum.on('accountsChanged', (accounts) => {
                 if (accounts.length > 0) {
                     console.log("Account changed, reconnecting...");
+                    isConnected = false;
                     initWeb3();
+                } else {
+                    isConnected = false;
+                    updateWalletUI();
                 }
             });
             
