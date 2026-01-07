@@ -562,3 +562,87 @@
             }
             
             const nextThreshold = thresholds[
+            // ... (ต่อจากส่วนที่ขาดหายไป)
+            const nextThreshold = thresholds[nextTier];
+            const prevThreshold = thresholds[tier];
+
+            const progress = burned - prevThreshold;
+            const needed = nextThreshold - prevThreshold;
+            const percentage = Math.min(100, Math.max(0, (progress / needed) * 100));
+
+            document.getElementById('progress-text').textContent = 
+                `${burned.toFixed(0)} / ${nextThreshold} MKE`;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-percent').textContent = `${percentage.toFixed(0)}%`;
+        }
+
+        // ============================================
+        // TRANSACTION FUNCTIONS (ส่วนที่หายไป)
+        // ============================================
+        
+        async function handleIgnite() {
+            if (!isConnected || !contract) {
+                alert("❌ กรุณาเชื่อมต่อ Wallet ก่อน");
+                return;
+            }
+
+            const amountInput = prompt("🔥 จำนวน MKE ที่ต้องการ Burn:", "1000");
+            if (!amountInput) return;
+
+            try {
+                const amountWei = ethers.utils.parseEther(amountInput);
+                console.log("🔥 Burning:", amountInput, "MKE");
+
+                // Check Gas Logic here (Optional)
+                const tx = await contract.upgradeTier(amountWei);
+                alert("⏳ กำลังดำเนินการ... กรุณารอสักครู่");
+                
+                await tx.wait();
+                alert("✅ Burn สำเร็จ! ระดับของคุณถูกอัปเกรดแล้ว");
+                
+                updateDashboard();
+            } catch (error) {
+                console.error("Burn failed:", error);
+                alert("❌ ทำรายการไม่สำเร็จ: " + (error.data?.message || error.message));
+            }
+        }
+
+        async function handleClaim() {
+            if (!isConnected || !contract) return;
+
+            try {
+                const tx = await contract.claimCredits();
+                alert("⏳ กำลังเคลมรางวัล...");
+                await tx.wait();
+                alert("✅ เคลมรางวัลสำเร็จ!");
+                updateDashboard();
+            } catch (error) {
+                console.error("Claim failed:", error);
+                alert("❌ เคลมไม่สำเร็จ: " + (error.data?.message || error.message));
+            }
+        }
+
+        // ============================================
+        // ⚡ COMMAND CENTER (คำสั่งทำให้ปุ่มกดได้)
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("🚀 System Ready");
+            
+            // เชื่อมปุ่มเข้ากับฟังก์ชัน
+            const btnConnect = document.getElementById('btn-connect-wallet');
+            const btnIgnite = document.getElementById('btn-ignite');
+            const btnClaim = document.getElementById('btn-claim');
+
+            if (btnConnect) {
+                btnConnect.onclick = initWeb3; 
+                // หรือใช้ addEventListener ก็ได้
+                // btnConnect.addEventListener('click', initWeb3);
+            }
+
+            if (btnIgnite) btnIgnite.onclick = handleIgnite;
+            if (btnClaim) btnClaim.onclick = handleClaim;
+        });
+
+    </script> 
+    </body>
+</html>
